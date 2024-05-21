@@ -1,222 +1,167 @@
 import copy
 import random
 import time
-global max_depth, hashT, HEURISTIC_SOCRES, R, Q, R4, R5, R6, count, count_leaf, delay_time
-max_depth = 6
+global max_depth, hashT, HEURISTIC_SOCRES, R, Q, R4, R5, R6, A, B, cacheT, count, count_leaf, count_id, delay_time
 delay_time = 0
-
-HEURISTIC_SCORES = {
-'ooooox' : -1000000000001,
-'ooooo ' : -1000000000001,
-'xooooo' : -1000000000001,
-' ooooo' : -1000000000001,
-'xxxxxo' : 1000000000001,
-'xxxxx ' : 1000000000001,
-'oxxxxx' : 1000000000001,
-' xxxxx' : 1000000000001,
-' oooo ' : -10000000002,
-' xxxx ' : 10000000002,
-'oxxxx ' : 100000000,
-' xxxxo' : 100000000,
-' oooox' : -100000000,
-'xoooo ' : -100000000,
-' xxx x' : 1000,
-' xxx o' : 1000,
-' xxx  ' : 1000,
-'x xxx ' : 1000,
-'o xxx ' : 1000,
-'  xxx ' : 1000,
-' ooo x' : -1000,
-' ooo o' : -1000,
-' ooo  ' : -1000,
-'x ooo ' : -1000,
-'o ooo ' : -1000,
-'  ooo ' : -1000,
-' xxxox' : 150,
-' xxxoo' : 150,
-' xxxo ' : 150,
-'x xxxo' : 150,
-'  xxxo' : 150,
-' oooxx' : -150,
-' oooxo' : -150,
-' ooox ' : -150,
-'o ooox' : -150,
-'  ooox' : -150,
-'oxxx x' : 150,
-'oxxx  ' : 150,
-'xoxxx ' : 150,
-'ooxxx ' : 150,
-' oxxx ' : 150,
-'oxxx ' : 150,
-'xooo o' : -150,
-'xooo  ' : -150,
-'xxooo ' : -150,
-'oxooo ' : -150,
-' xooo ' : -150,
-'xooo ' : -150,
-' xx  x' : 10,
-' xx  o' : 10,
-' xx   ' : 10,
-'x xx  ' : 10,
-'o xx  ' : 10,
-' xx  ' : 10,
-'  xx x' : 10,
-'  xx o' : 10,
-'  xx  ' : 10,
-'x  xx ' : 10,
-'o  xx ' : 10,
-'   xx ' : 10,
-'  xx ' : 10,
-' oo  x' : -10,
-' oo  o' : -10,
-' oo   ' : -10,
-'x oo  ' : -10,
-'o oo  ' : -10,
-' oo  ' : -10,
-'  oo x' : -10,
-'  oo o' : -10,
-'  oo  ' : -10,
-'x  oo ' : -10,
-'o  oo ' : -10,
-'   oo ' : -10,
-'  oo ' : -10,
-}
-# HEURISTIC_SCORES = {
-#         "ooooo": -1000000000001,
-#         "xxxxx": 1000000000001,
-#         " oooo ": -10000000002,
-#         " xxxx ": 10000000002,
-#         "oxxxx ": 100000000,
-#         " xxxxo": 100000000,
-#         " oooox": -100000000,
-#         "xoooo ": -100000000,
-#         " xxx ": 1000,
-#         " ooo ": -1000,
-#         " xxxo": 150,
-#         " ooox": -150,
-#         "oxxx ": 150,
-#         "xooo ": -150,
-#         " xx  ": 10,
-#         "  xx ": 10,
-#         " oo  ": -10,
-#         "  oo ": -10,
-# }
+count_id = 0
+cacheT = dict()
+A = 3
+B = 5
 count = 0
 count_leaf = 0
-# hashT = {
-# #     6628 : -1000000000001,
-# # 22020 : 1000000000001,
-#     6628 : float("-inf"),
-#     22020 : float("inf"),
-#     19967 : -10000000002,
-#     7869 : 10000000002,
-#     8361 : 100000000,
-#     7948 : 100000000,
-#     20055 : -100000000,
-#     15645 : -100000000,
-#     2841 : 1000,
-#     965 : -1000,
-#     2920 : 150,
-#     1053 : -150,
-#     8425 : 150,
-#     20056 : -150,
-#     7794 : 10,
-#     24558 : 10,
-#     8222 : -10,
-#     9531 : -10,
-# }
+
+def get_all_lines(board):
+    size = len(board)
+    lines = []
+
+    # Lấy tất cả các đường ngang
+    for row in board:
+        if len(row) >= 5:
+            lines.append(row)
+
+    # Lấy tất cả các đường dọc
+    for col in range(size):
+        column = [board[row][col] for row in range(size)]
+        if len(column) >= 5:
+            lines.append(column)
+
+    # Lấy các đường chéo chính và chéo phụ
+    # Các đường chéo chính
+    for start in range(size - 4):
+        # Chéo chính từ trên trái xuống dưới phải
+        main_diagonal1 = [board[i][i + start] for i in range(size - start)]
+        if len(main_diagonal1) >= 5:
+            lines.append(main_diagonal1)
+        if start != 0 :
+            main_diagonal2 = [board[i + start][i] for i in range(size - start)]
+            if len(main_diagonal2) >= 5:
+                lines.append(main_diagonal2)
+
+        # Chéo phụ từ trên phải xuống dưới trái
+        anti_diagonal1 = [board[i][size - 1 - i - start] for i in range(size - start)]
+        if len(anti_diagonal1) >= 5:
+            lines.append(anti_diagonal1)
+        if start != 0:
+            anti_diagonal2 = [board[i + start][size - 1 - i] for i in range(size - start)]
+            if len(anti_diagonal2) >= 5:
+                lines.append(anti_diagonal2)
+
+    return lines
+
+def rk(s):
+    h = 0
+    res = 0
+    count = 0
+    for i in range(len(s)):
+        count += 1
+        c = s[i]
+        if count < 5:
+            h = (h * R + ord(c)) % Q
+        if count == 5:
+            h = (h * R + ord(c)) % Q
+            value = hashT.get(h)
+            if value != None:
+                res += value
+        if count == 6:
+            h = (h * R + ord(c)) % Q
+            value = hashT.get(h)
+            if value != None:
+                res += value
+            if i == len(s) - 1:
+                h = (h + Q - R6 * ord(s[i - 5]) % Q) % Q
+                value = hashT.get(h)
+                if value != None:
+                    res += value
+        if count > 6:
+            h = (h + Q - R6 * ord(s[i - 6]) % Q) % Q
+            value = hashT.get(h)
+            if value != None:
+                res += value
+            h = (h * R + ord(c)) % Q
+            value = hashT.get(h)
+            if value != None:
+                res += value
+            if i == len(s) - 1:
+                h = (h + Q - R6 * ord(s[i - 5]) % Q) % Q
+                value = hashT.get(h)
+                if value != None:
+                    res += value
+    return res
+
+def compute(b):
+    lines = get_all_lines(b)
+    res = 0
+    for i in lines:
+        res += rk(i)
+    return res
+def brute_force(s):
+    res = 0
+    for i in range(len(s)):
+        t = ""
+        for j in range(i, i + 5):
+            if j >= len(s):
+                t = None
+                break
+            t += s[j]
+        if t != None:
+            value = HEURISTIC_SCORES.get(t)
+            if value != None:
+                res += value
+
+    for i in range(len(s)):
+        t = ""
+        for j in range(i, i + 6):
+            if j >= len(s):
+                t = None
+                break
+            t += s[j]
+        if t != None:
+            value = HEURISTIC_SCORES.get(t)
+            if value != None:
+                res += value
+    return res
+HEURISTIC_SCORES = {
+        "ooooo": -1000000000000,
+        "xxxxx": 1000000000000,
+        " oooo ": -50000000000,
+        " xxxx ": 10000000000,
+        "oxxxx ": 100000000,
+        " xxxxo": 100000000,
+        " oooox": -500000000,
+        "xoooo ": -500000000,
+        " xxx ": 1000,
+        " xxxo": 150,
+        " ooox": -50,
+        " ooo ": -5000,
+        # " xx  ": 10,
+        # "  xx ": 10,
+        # " oo ": -50
+    }
 hashT = {
-    20547 : float("-inf"),
-    20459 : float("-inf"),
-    15724 : float("-inf"),
-    20046 : float("-inf"),
-    3626 : float("inf"),
-    3547 : float("inf"),
-    8449 : float("inf"),
-    7957 : float("inf"),
-    19967 : -10000000002,
-    7869 : 10000000002,
-    8361 : 100000000,
-    7948 : 100000000,
-    20055 : -100000000,
-    15645 : -100000000,
-    12910 : 1000,
-    12901 : 1000,
-    12822 : 1000,
-    11937 : 1000,
-    16751 : 1000,
-    16259 : 1000,
-    27312 : -1000,
-    27303 : -1000,
-    27224 : -1000,
-    10061 : -1000,
-    14875 : -1000,
-    14383 : -1000,
-    5653 : 150,
-    5644 : 150,
-    5565 : 150,
-    12016 : 150,
-    16338 : 150,
-    22359 : -150,
-    22350 : -150,
-    22271 : -150,
-    14963 : -150,
-    14471 : -150,
-    13402 : 150,
-    13314 : 150,
-    17521 : 150,
-    22335 : 150,
-    21843 : 150,
-    8425 : 150,
-    22981 : -150,
-    22902 : -150,
-    1671 : -150,
-    6485 : -150,
-    5993 : -150,
-    20056 : -150,
-    16752 : 10,
-    16743 : 10,
-    16664 : 10,
-    16890 : 10,
-    21704 : 10,
-    7794 : 10,
-    21300 : 10,
-    21291 : 10,
-    21212 : 10,
-    6173 : 10,
-    10987 : 10,
-    10495 : 10,
-    24558 : 10,
-    16396 : -10,
-    16387 : -10,
-    16308 : -10,
-    17318 : -10,
-    22132 : -10,
-    8222 : -10,
-    21728 : -10,
-    21719 : -10,
-    21640 : -10,
-    18627 : -10,
-    23441 : -10,
-    22949 : -10,
-    9531 : -10,
+6628 : -1000000000000,
+22020 : 1000000000000,
+19967 : -50000000000,
+7869 : 10000000000,
+8361 : 100000000,
+7948 : 100000000,
+20055 : -500000000,
+15645 : -500000000,
+2841 : 1000,
+2920 : 150,
+1053 : -50,
+965 : -5000,
 }
 R = 256
-# R6 = 205707292
-# R5 = 102220456
-# R4 = 128109484
+R5 = 16768
 R6 = 5572
-# R5 = 16768
 
-# R4 = 16777216
 Q = 27481
-
 # def toHash(str):
 #     t  = 0
 #     for c in str:
 #         t = (R * t + ord(c)) % Q
 #     return t
-#
+
 
 # for key in HEURISTIC_SCORES:
 #     t = toHash(key)
@@ -227,18 +172,19 @@ Q = 27481
 #     #     print("\'" + "x" + key + "\'" + " : " + str(HEURISTIC_SCORES[key]) + ", ")
 #     #     print("\'" + "o" + key + "\'" + " : " + str(HEURISTIC_SCORES[key]) + ", ")
 #     #     print("\'" + " " + key + "\'" + " : " + str(HEURISTIC_SCORES[key]) + ", ")
-#     # print("\'" + key + "\'" + " : " + str(HEURISTIC_SCORES[key]) + ", ")
-#     print(str(t) + " : " + str(HEURISTIC_SCORES[key]) + ",")
+    # print("\'" + key + "\'" + " : " + str(HEURISTIC_SCORES[key]) + ", ")
+    # print(str(t) + " : " + str(HEURISTIC_SCORES[key]) + ",")
+#
 
-
-# print(pow(R, 5) % Q)
 # print(pow(R, 4) % Q)
+# print(pow(R, 5) % Q)
 
 
 def get_move(board, size):
     # Find all available positions on the board
     size = int(size)
     children = get_children(board, size)
+    id = get_id(board, size)
     next_action = None
     value = float("inf") # role o as min value
     # value = float("-inf") # role x as max value
@@ -246,17 +192,16 @@ def get_move(board, size):
     beta = float("inf")
     lres = list()
     testList = list(children)
-    # testList.remove((6, 9))
-    # testList.insert(0, (6, 9))
+    lastCache = compute(board)
     for c in testList:
-        cur = node('o', c, board, children, 1, size, 0) # role o as min value
+        cur = node('o', c, board, children, 1, size, lastCache, id) # role o as min value
         t = cur.max_value(alpha, beta)
         lres.append((c, t))
-        if (t < value):
+        if t < value:
             value = t
             next_action = c
         beta = min(beta, t)
-        if value == float("-inf"): break
+        # if value == float("-inf"): break
 
         # cur = node('x', c, board, children, 1, size) # role x as max value
         # t = cur.min_value(alpha, beta)
@@ -301,19 +246,37 @@ def get_children(board, size):
                 if board[i][j] == ' ':
                     res.add((i, j))
     return res
+
+def get_id(board, size):
+    res = 0
+    for i in range(size):
+        for j in range(size):
+            char = board[i][j]
+            res += ord(char) * pow(A, i) * pow(B, j)
+    return res;
+
 class node:
-    def __init__(self, role, move, board, children, depth, size, lastCache):
-        # start = time.time()
+    def __init__(self, role, move, board, children, depth, size, lastCache, lastID):
+        global count_id
         global count
         count += 1
-        # print(str(count) + " depth: " + str(depth))
+        print(str(count) + " depth: " + str(depth))
         self.role = role
         self.move = move
         x = move[0]
         y = move[1]
         self.board = board
         self.depth = depth
-        self.cache = self.computeCache(lastCache)
+        self.id = lastID - ord(' ')*pow(A, x)*pow(B, y) + ord(self.role)*pow(A, x)*pow(B, y)
+        if depth == max_depth:
+            self.cache = cacheT.get(self.id)
+            if (self.cache == None):
+                count_id += 1
+                self.cache = self.computeCache(lastCache)
+                cacheT[self.id] = self.cache
+        else:
+        # self.cache = self.computeCache(lastCache)
+            self.cache = self.computeCache(lastCache)
         if depth == max_depth: return
         board[x][y] = role
         self.children = children
@@ -327,40 +290,29 @@ class node:
                     if not((i, j) in self.children):
                         self.children.add((i, j))
                         self.to_remove.append((i, j))
-        # diff = time.time() - start
-        # print("init = " + '{0:.30f}'.format(diff))
-        # global delay_time
-        # delay_time += diff
 
     def restore(self):
-        # start = time.time()
         self.board[self.move[0]][self.move[1]] = ' '
         for i in self.to_remove:
             self.children.remove(i)
         self.children.add(self.move)
-        # diff = time.time() - start
-        # print("restore = " + '{0:.30f}'.format(diff))
-        # global delay_time
-        # delay_time += diff
+
     def min_value(self, alpha, beta):
         if self.depth == max_depth:
             global count_leaf
             count_leaf += 1
             return self.cache
-            # t = self.compute()
-            # self.restore()
-            # return t
         if self.cache == float("-inf"):
             self.restore()
             return self.cache
         value = float("inf")
         l = list(self.children)
         for c in l:
-            cur = node('o', c, self.board, self.children, self.depth + 1, len(self.board), self.cache)
+            cur = node('o', c, self.board, self.children, self.depth + 1, len(self.board), self.cache, self.id)
             t = cur.max_value(alpha, beta)
             value = min(value, t)
             beta = min(beta, t)
-            if (alpha >= beta):
+            if alpha >= beta:
                 break
 
         self.restore()
@@ -371,66 +323,52 @@ class node:
             global count_leaf
             count_leaf += 1
             return self.cache
-            # t = self.compute()
-            # # self.restore()
-            # return t
         if self.cache == float("inf"):
             self.restore()
             return self.cache
 
         value = float("-inf")
-        # start = time.time()
         l = list(self.children)
-        # print("copy list = " + '{0:.30f}'.format(time.time() - start))
         for c in l:
-            cur = node('x', c, self.board, self.children, self.depth + 1, len(self.board), self.cache)
+            cur = node('x', c, self.board, self.children, self.depth + 1, len(self.board), self.cache, self.id)
             t = cur.min_value(alpha, beta)
             value = max(value, t)
             alpha = max(alpha, t)
             if (alpha >= beta):
                 break
         self.restore()
-        # if value == float("inf"):
-        #     print_caro_table(self.board)
-        #     input()
         return value
     def computeCache(self, lastCache):
-        # start = time.time()
         x = self.move[0]
         y = self.move[1]
 
         before = self.computeBoardRabinKarp()
-        # before = self.computeBoardSubString()
 
         self.board[x][y] = self.role
 
         after = self.computeBoardRabinKarp()
-        # after = self.computeBoardSubString()
 
+        # test_value = compute(self.board)
         self.board[x][y] = ' '
-        # diff = time.time() - start
-        # print("restore = " + '{0:.30f}'.format(diff))
-        # global delay_time
-        # delay_time += diff
+        # if test_value != lastCache + after - before:
+        #     print(lastCache)
+        #     print(after)
+        #     print(before)
+        #     print_caro_table(self.board)
+        #     self.board[x][y] = self.role
+        #     print()
+        #     print_caro_table(self.board)
+        #     self.board[x][y] = ' '
+        #     print(test_value)
+        #     print("error")
+        #     input()
         return lastCache + after - before
-    # def computeBoardSubString(self):
-    #     x = self.move[0]
-    #     y = self.move[1]
-    #     b = self.board
-    #     s = len(b)
-    #
-
 
     def computeBoardRabinKarp(self):
         h = self.horizontal()
         v = self.vertical()
-        # start = time.time()
         rd = self.right_diagonal()
         ld = self.left_diagonal()
-        # diff = time.time() - start
-        # print("restore = " + '{0:.30f}'.format(diff))
-        # global delay_time
-        # delay_time += diff
         return h + v + rd + ld
 
     def horizontal(self):
@@ -438,368 +376,112 @@ class node:
         y = self.move[1]
         b = self.board
         s = len(b)
-        res = 0
-        count = 0
-        t5 = 0
-        t6 = 0
-        for j in range(y - 5, y + 6):
-            if j < 0: continue
-            if j >= s: return res
-            char = b[x][j]
-            count+=1
-            # if count < 5: t5 = (R * t5 + ord(char)) % Q
-            # if count >= 5:
-            #     if count == 5:
-            #         t5 = (R * t5 + ord(char)) % Q
-            #     else:
-            #         t5 = (t5 + Q - R5 * ord(b[x][j - 5]) % Q) % Q
-            #         t5 = (t5 * R + ord(char)) % Q
-            #     if (t5 in hashT): res += hashT[t5]
-            #
-            if count < 6: t6 = (R * t6 + ord(char)) % Q
-            if count >= 6:
-                if count == 6:
-                    t6 = (R * t6 + ord(char)) % Q
-                else:
-                    t6 = (t6 + Q - R6 * ord(b[x][j - 6]) % Q) % Q
-                    t6 = (t6 * R + ord(char)) % Q
-                if (t6 in hashT): res += hashT[t6]
-        return res
+        st = ""
+        for i in range(y - 5, y + 6):
+            if i < 0: continue
+            if i >= s: break
+            st += b[x][i]
+        value = rk(st)
+        # if value != brute_force(st):
+        #     print("error")
+        return rk(st)
+
+        # for i in range(y - 5, y + 6):
+        #     if i < 0: continue
+        #     if i >= s:
+        #         if count >= 6:
+        #             h = (h + Q - R6 * ord(b[x][i - 6]) % Q) % Q
+        #             value = hashT.get(h)
+        #             if value != None:
+        #                 res += value
+        #     count += 1
+        #     c = b[x][i]
+        #     if count < 5:
+        #         h = (h * R + ord(c)) % Q
+        #     if count == 5:
+        #         h = (h * R + ord(c)) % Q
+        #         value = hashT.get(h)
+        #         if value != None:
+        #             res += value
+        #     if count == 6:
+        #         h = (h * R + ord(c)) % Q
+        #         value = hashT.get(h)
+        #         if value != None:
+        #             res += value
+        #         if i == y + 5:
+        #             h = (h + Q - R6 * ord(b[x][i - 5]) % Q) % Q
+        #             value = hashT.get(h)
+        #             if value != None:
+        #                 res += value
+        #     if count > 6:
+        #         h = (h + Q - R6 * ord(b[x][i - 6]) % Q) % Q
+        #         value = hashT.get(h)
+        #         if value != None:
+        #             res += value
+        #         h = (h * R + ord(c)) % Q
+        #         value = hashT.get(h)
+        #         if value != None:
+        #             res += value
+        #         if i == y + 5:
+        #             h = (h + Q - R6 * ord(b[x][i - 5]) % Q) % Q
+        #             value = hashT.get(h)
+        #             if value != None:
+        #                 res += value
+
+
+
 
     def vertical(self):
         x = self.move[0]
         y = self.move[1]
         b = self.board
         s = len(b)
-        res = 0
-        count = 0
-        t5 = 0
-        t6 = 0
+        st = ""
         for i in range(x - 5, x + 6):
             if i < 0: continue
-            if i >= s: return res
-            char = b[i][y]
-            count += 1
-
-            # if count < 5: t5 = (R * t5 + ord(char)) % Q
-            # if count >= 5:
-            #     if count == 5:
-            #         t5 = (R * t5 + ord(char)) % Q
-            #     else:
-            #         t5 = (t5 + Q - R5 * ord(b[i - 5][y]) % Q) % Q
-            #         t5 = (t5 * R + ord(char)) % Q
-            #     if (t5 in hashT): res += hashT[t5]
-
-            if count < 6: t6 = (R * t6 + ord(char)) % Q
-            if count >= 6:
-                if count == 6:
-                    t6 = (R * t6 + ord(char)) % Q
-                else:
-                    t6 = (t6 + Q - R6 * ord(b[i - 6][y]) % Q) % Q
-                    t6 = (t6 * R + ord(char)) % Q
-                if (t6 in hashT): res += hashT[t6]
-        return res
+            if i >= s: break
+            st += b[i][y]
+        return rk(st)
 
     def left_diagonal(self):
-
         x = self.move[0] - 5
         y = self.move[1] - 5
         b = self.board
         s = len(b)
-        res = 0
-        t5 = 0
-        t6 = 0
-        for count in range(1, 12):
-            i = x + count
-            j = y + count
-            if i < 0 or j < 0: continue
-            if i >= s or j >= s: return res
-            char = b[i][j]
+        st = ""
+        for i in range(11):
+            if x < 0 or y < 0:
+                x += 1
+                y += 1
+                continue
+            if x >= s or y >= s: break
+            st += b[x][y]
+            x += 1
+            y += 1
+        return rk(st)
 
-            # if count < 5: t5 = (R * t5 + ord(char)) % Q
-            # if count >= 5:
-            #     if count == 5:
-            #         t5 = (R * t5 + ord(char)) % Q
-            #     else:
-            #         t5 = (t5 + Q - R5 * ord(b[i - 5][j - 5]) % Q) % Q
-            #         t5 = (t5 * R + ord(char)) % Q
-            #     if (t5 in hashT): res += hashT[t5]
 
-            if count < 6: t6 = (R * t6 + ord(char)) % Q
-            if count >= 6:
-                if count == 6:
-                    t6 = (R * t6 + ord(char)) % Q
-                else:
-                    t6 = (t6 + Q - R6 * ord(b[i - 6][j - 6]) % Q) % Q
-                    t6 = (t6 * R + ord(char)) % Q
-                if (t6 in hashT): res += hashT[t6]
-        return res
 
 
     def right_diagonal(self):
-        x = self.move[0] + 5
+        x = self.move[0] - 5
         y = self.move[1] + 5
         b = self.board
         s = len(b)
-        res = 0
-        t5 = 0
-        t6 = 0
-        for count in range(1, 12):
-            i = x - count
-            j = y - count
-            if i < 0 or j < 0: continue
-            if i >= s or j >= s: return res
-            char = b[i][j]
+        st = ""
+        for i in range(11):
+            if x < 0 or y >= s:
+                x += 1
+                y -= 1
+                continue
+            if x >= s or y < 0:
+                break
+            st += b[x][y]
+            x += 1
+            y -= 1
+        return rk(st)
 
-            # if count < 5: t5 = (R * t5 + ord(char)) % Q
-            # if count >= 5:
-            #     if count == 5:
-            #         t5 = (R * t5 + ord(char)) % Q
-            #     else:
-            #         t5 = (t5 + Q - R5 * ord(b[i + 5][j + 5]) % Q) % Q
-            #         t5 = (t5 * R + ord(char)) % Q
-            #     if (t5 in hashT): res += hashT[t5]
 
-            if count < 6: t6 = (R * t6 + ord(char)) % Q
-            if count >= 6:
-                if count == 6:
-                    t6 = (R * t6 + ord(char)) % Q
-                else:
-                    t6 = (t6 + Q - R6 * ord(b[i + 6][j + 6]) % Q) % Q
-                    t6 = (t6 * R + ord(char)) % Q
-                if (t6 in hashT): res += hashT[t6]
-        return res
-
-    # def compute(self):
-    #     global count_leaf
-    #     count_leaf += 1
-    #     self.board[self.move[0]][self.move[1]] = self.role
-    #     start = time.time()
-    #     b = self.board
-    #     s = len(b)
-    #     v = self.vertical_compute(b, s)
-    #
-    #     h = self.horizontal_compute(b, s)
-    #
-    #     rd = self.right_diagonal_compute(b, s)
-    #
-    #     ld = self.left_diagonal_compute(b, s)
-    #     print("compute = " + '{0:.30f}'.format(time.time() - start))
-    #     # print("compute = " + str(time.monotonic() - start) )
-    #     self.board[self.move[0]][self.move[1]] = ' '
-    #     return v + h + rd + ld
-
-    # def left_diagonal_compute(self, b, s):
-    #     j = 4
-    #     i = s - 1
-    #     ld = 0
-    #     while j < s:
-    #         t4 = t5 = t6 = 0
-    #         for c in range(j + 1):
-    #             char = b[i - c][j - c]
-    #
-    #             if c < 3: t4 = (R * t4 + ord(char)) % Q
-    #             if c >= 3:
-    #                 if c == 3:
-    #                     t4 = (R * t4 + ord(char)) % Q
-    #                 else:
-    #                     t4 = (t4 + Q - R4 * ord(b[i - c + 4][j - c + 4]) % Q) % Q
-    #                     t4 = (t4 * R + ord(char)) % Q
-    #                 if t4 in hashT: ld += hashT[t4]
-    #
-    #             if c < 4: t5 = (R * t5 + ord(char)) % Q
-    #             if c >= 4:
-    #                 if c == 4:
-    #                     t5 = (R * t5 + ord(char)) % Q
-    #                 else:
-    #                     t5 = (t5 + Q - R5 * ord(b[i - c + 5][j - c + 5]) % Q) % Q
-    #                     t5 = (t5 * R + ord(char)) % Q
-    #                 if (t5 in hashT): ld += hashT[t5]
-    #
-    #             if c < 5: t6 = (R * t6 + ord(char)) % Q
-    #             if c >= 5:
-    #                 if c == 5:
-    #                     t6 = (R * t6 + ord(char)) % Q
-    #                 else:
-    #                     t6 = (t6 + Q - R6 * ord(b[i - c + 6][j - c + 6]) % Q) % Q
-    #                     t6 = (t6 * R + ord(char)) % Q
-    #                 if (t6 in hashT): ld += hashT[t6]
-    #         j += 1
-    #     j -= 1
-    #     i -= 1
-    #     while i > 3:
-    #         t4 = t5 = t6 =0
-    #         for c in range(i + 1):
-    #             char = b[i - c][j - c]
-    #
-    #             if c < 3: t4 = (R * t4 + ord(char)) % Q
-    #             if c >= 3:
-    #                 if c == 3:
-    #                     t4 = (R * t4 + ord(char)) % Q
-    #                 else:
-    #                     t4 = (t4 + Q - R4 * ord(b[i - c + 4][j - c + 4]) % Q) % Q
-    #                     t4 = (t4 * R + ord(char)) % Q
-    #                 if (t4 in hashT): ld += hashT[t4]
-    #
-    #             if c < 4: t5 = (R * t5 + ord(char)) % Q
-    #             if c >= 4:
-    #                 if c == 4:
-    #                     t5 = (R * t5 + ord(char)) % Q
-    #                 else:
-    #                     t5 = (t5 + Q - R5 * ord(b[i - c + 5][j - c + 5]) % Q) % Q
-    #                     t5 = (t5 * R + ord(char)) % Q
-    #                 if (t5 in hashT): ld += hashT[t5]
-    #
-    #             if c < 5: t6 = (R * t6 + ord(char)) % Q
-    #             if c >= 5:
-    #                 if c == 5:
-    #                     t6 = (R * t6 + ord(char)) % Q
-    #                 else:
-    #                     t6 = (t6 + Q - R6 * ord(b[i - c + 6][j - c + 6]) % Q) % Q
-    #                     t6 = (t6 * R + ord(char)) % Q
-    #                 if (t6 in hashT): ld += hashT[t6]
-    #         i -= 1
-    #     return ld
-    #
-    # def right_diagonal_compute(self, b, s):
-    #     i = 0
-    #     j = 4
-    #     rd = 0
-    #     while j < s:
-    #         t4 = t5 = t6 = 0
-    #         for c in range(j + 1):
-    #             char = b[i + c][j - c]
-    #
-    #             if c < 3: t4 = (R * t4 + ord(char)) % Q
-    #             if c >= 3:
-    #                 if c == 3:
-    #                     t4 = (R * t4 + ord(char)) % Q
-    #                 else:
-    #                     t4 = (t4 + Q - R4 * ord(b[i + c - 4][j - c + 4]) % Q) % Q
-    #                     t4 = (t4 * R + ord(char)) % Q
-    #                 if (t4 in hashT): rd += hashT[t4]
-    #
-    #             if c < 4: t5 = (R * t5 + ord(char)) % Q
-    #             if c >= 4:
-    #                 if c == 4:
-    #                     t5 = (R * t5 + ord(char)) % Q
-    #                 else:
-    #                     t5 = (t5 + Q - R5 * ord(b[i + c - 5][j - c + 5]) % Q) % Q
-    #                     t5 = (t5 * R + ord(char)) % Q
-    #                 if (t5 in hashT): rd += hashT[t5]
-    #
-    #             if c < 5: t6 = (R * t6 + ord(char)) % Q
-    #             if c >= 5:
-    #                 if c == 5:
-    #                     t6 = (R * t6 + ord(char)) % Q
-    #                 else:
-    #                     t6 = (t6 + Q - R6 * ord(b[i + c - 6][j - c + 6]) % Q) % Q
-    #                     t6 = (t6 * R + ord(char)) % Q
-    #                 if (t6 in hashT): rd += hashT[t6]
-    #         j += 1
-    #     j -= 1
-    #     while i < s - 4:
-    #         t4 = t5 = t6 = 0
-    #         for c in range(s - i):
-    #             char = b[i + c][j - c]
-    #
-    #             if c < 3: t4 = (R * t4 + ord(char)) % Q
-    #             if c >= 3:
-    #                 if c == 3:
-    #                     t4 = (R * t4 + ord(char)) % Q
-    #                 else:
-    #                     t4 = (t4 + Q - R4 * ord(b[i + c - 4][j - c + 4]) % Q) % Q
-    #                     t4 = (t4 * R + ord(char)) % Q
-    #                 if (t4 in hashT): rd += hashT[t4]
-    #
-    #             if c < 4: t5 = (R * t5 + ord(char)) % Q
-    #             if c >= 4:
-    #                 if c == 4:
-    #                     t5 = (R * t5 + ord(char)) % Q
-    #                 else:
-    #                     t5 = (t5 + Q - R5 * ord(b[i + c - 5][j - c + 5]) % Q) % Q
-    #                     t5 = (t5 * R + ord(char)) % Q
-    #                 if (t5 in hashT): rd += hashT[t5]
-    #
-    #             if c < 5: t6 = (R * t6 + ord(char)) % Q
-    #             if c >= 5:
-    #                 if c == 5:
-    #                     t6 = (R * t6 + ord(char)) % Q
-    #                 else:
-    #                     t6 = (t6 + Q - R6 * ord(b[i + c - 6][j - c + 6]) % Q) % Q
-    #                     t6 = (t6 * R + ord(char)) % Q
-    #                 if (t6 in hashT): rd += hashT[t6]
-    #         i += 1
-    #     return rd
-    #
-    # def vertical_compute(self, b, s):
-    #     h = 0
-    #     for i in range(s):
-    #         t4 = t5 = t6 = 0
-    #         for j in range(s):
-    #             c = b[j][i]
-    #             if j < 3: t4 = (R * t4 + ord(c)) % Q
-    #             if j >= 3:
-    #                 if j == 3:
-    #                     t4 = (R * t4 + ord(c)) % Q
-    #                 else:
-    #                     t4 = (t4 + Q - R4 * ord(b[j - 4][i]) % Q) % Q
-    #                     t4 = (t4 * R + ord(c)) % Q
-    #                 if (t4 in hashT): h += hashT[t4]
-    #
-    #             if j < 4: t5 = (R * t5 + ord(c)) % Q
-    #             if j >= 4:
-    #                 if j == 4:
-    #                     t5 = (R * t5 + ord(c)) % Q
-    #                 else:
-    #                     t5 = (t5 + Q - R5 * ord(b[j - 5][i]) % Q) % Q
-    #                     t5 = (t5 * R + ord(c)) % Q
-    #                 if (t5 in hashT): h += hashT[t5]
-    #
-    #             if j < 5: t6 = (R * t6 + ord(c)) % Q
-    #             if j >= 5:
-    #                 if j == 5:
-    #                     t6 = (R * t6 + ord(c)) % Q
-    #                 else:
-    #                     t6 = (t6 + Q - R6 * ord(b[j - 6][i]) % Q) % Q
-    #                     t6 = (t6 * R + ord(c)) % Q
-    #                 if (t6 in hashT): h += hashT[t6]
-    #     return h
-    #
-    # def horizontal_compute(self, b, s):
-    #     v = 0
-    #     for i in range(s):
-    #         t4 = t5 = t6 = 0
-    #         for j in range(s):
-    #             c = b[i][j]
-    #             if j < 3: t4 = (R * t4 + ord(c)) % Q
-    #             if j >= 3:
-    #                 if j == 3:
-    #                     t4 = (R * t4 + ord(c)) % Q
-    #                 else:
-    #                     t4 = (t4 + Q - R4 * ord(b[i][j - 4]) % Q) % Q
-    #                     t4 = (t4 * R + ord(c)) % Q
-    #                 if (t4 in hashT): v += hashT[t4]
-    #
-    #             if j < 4: t5 = (R * t5 + ord(c)) % Q
-    #             if j >= 4:
-    #                 if j == 4:
-    #                     t5 = (R * t5 + ord(c)) % Q
-    #                 else:
-    #                     t5 = (t5 + Q - R5 * ord(b[i][j - 5]) % Q) % Q
-    #                     t5 = (t5 * R + ord(c)) % Q
-    #                 if (t5 in hashT): v += hashT[t5]
-    #
-    #             if j < 5: t6 = (R * t6 + ord(c)) % Q
-    #             if j >= 5:
-    #                 if j == 5:
-    #                     t6 = (R * t6 + ord(c)) % Q
-    #                 else:
-    #                     t6 = (t6 + Q - R6 * ord(b[i][j - 6]) % Q) % Q
-    #                     t6 = (t6 * R + ord(c)) % Q
-    #                 if (t6 in hashT): v += hashT[t6]
-    #     return v
-    #
 # test
 def print_caro_table(board):
     size = len(board)
@@ -822,11 +504,11 @@ tb = [
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', 'x', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -837,6 +519,7 @@ tb = [
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
 ]
+max_depth = 6
 start = time.time()
 move = get_move(tb, 20)
 print(move)
@@ -846,16 +529,44 @@ print(count_leaf)
 tb[move[0]][move[1]] = 'o'
 print_caro_table(tb)
 print(delay_time)
+print(count_id)
+
+# # print(compute(tb))
+#
+# chars = ['x', 'o', ' ']
+# def generate_random_pat(size):
+#     row = [random.choice(chars) for _ in range(size)]
+#     return ''.join(row)
+#
+# print(compute(tb))
+# get_all_lines(tb)
+# print(generate_random_pat(20))
+# count = 0
+# for i in range(100000):
+#     s = generate_random_pat(7)
+#     if (rk(s) != brute_force(s)):
+#         print("error: " + s)
+#         count+=1
+#
+# print(count)
+#
+# s = "xooxoooooo   o  xxxo"
+# print(rk(s))
+# print(brute_force(s))
 
 
-# t = 10000000000000000
-# print(type(t))
-# c = 's'
-# while True:
-#     start = time.time()
-#     t *= 100
-#     diff = time.time() - start
-#     # print(str(t) + " = " + '{0:.30f}'.format(diff))
-#     if diff > 0.0000008:
-#         print(str(t) + " = " + '{0:.30f}'.format(diff))
-#         input()
+
+# Ví dụ sử dụng
+# board = [
+#     [1, 2, 3, 4, 5, 6, 7],
+#     [8, 9, 10, 11, 12, 13, 14],
+#     [15, 16, 17, 18, 19, 20, 21],
+#     [22, 23, 24, 25, 26, 27, 28],
+#     [29, 30, 31, 32, 33, 34, 35],
+#     [36, 37, 38, 39, 40, 41, 42],
+#     [43, 44, 45, 46, 47, 48, 49]
+# ]
+# #
+# all_lines = get_all_lines(tb)
+# for line in all_lines:
+#     print(line)

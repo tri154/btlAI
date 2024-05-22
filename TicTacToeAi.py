@@ -203,7 +203,8 @@ def get_move(board, size):
     beta = float("inf")
     lres = list()
     cres = list()
-    for c in init.children:
+    l = list(init.children)
+    for c in l:
         cur = node('o', c, init.cache, init.id, init) # role o as min value
         cres.append((cur.move, cur.cache))
         t = cur.max_value(alpha, beta)
@@ -224,6 +225,10 @@ def get_move(board, size):
     print(value)
     print(lres)
     print(cres)
+    print("total node: " +  str(count))
+    print("total leaf: " + str(count_leaf))
+    print("delay time: " + str(delay_time))
+    print("cache hit: " + str(count_leaf - count_id))
     return next_action
 
 
@@ -280,6 +285,8 @@ class node:
         self.move = move
         self.board = parent.board
         self.depth = parent.depth + 1
+        self.children = parent.children
+        self.to_remove = list()
         print(str(count) + " depth: " + str(self.depth))
         x = move[0]
         y = move[1]
@@ -296,19 +303,6 @@ class node:
         # self.cache = self.computeCache(lastCache)
             self.cache = self.computeCache(lastCache)
         if self.depth == max_depth: return
-        self.board[x][y] = role
-        self.children = parent.children
-        self.children.remove((x, y))
-        self.to_remove = list()
-        size = len(self.board)
-        for i in range(x - 1, x + 2):
-            for j in range(y - 1, y + 2):
-                if i < 0 or i >= size: continue
-                if j < 0 or j >= size: continue
-                if self.board[i][j] == ' ':
-                    if not((i, j) in self.children):
-                        self.children.add((i, j))
-                        self.to_remove.append((i, j))
 
     def restore(self):
         self.board[self.move[0]][self.move[1]] = ' '
@@ -324,6 +318,21 @@ class node:
         if self.cache == float("-inf"):
             self.restore()
             return self.cache
+
+        x = self.move[0]
+        y = self.move[1]
+        self.board[x][y] = self.role
+        self.children.remove((x, y))
+        size = len(self.board)
+        for i in range(x - 1, x + 2):
+            for j in range(y - 1, y + 2):
+                if i < 0 or i >= size: continue
+                if j < 0 or j >= size: continue
+                if self.board[i][j] == ' ':
+                    if not ((i, j) in self.children):
+                        self.children.add((i, j))
+                        self.to_remove.append((i, j))
+
         value = float("inf")
         l = list(self.children)
         for c in l:
@@ -346,6 +355,20 @@ class node:
         if self.cache == float("inf"):
             self.restore()
             return self.cache
+
+        x = self.move[0]
+        y = self.move[1]
+        self.board[x][y] = self.role
+        self.children.remove((x, y))
+        size = len(self.board)
+        for i in range(x - 1, x + 2):
+            for j in range(y - 1, y + 2):
+                if i < 0 or i >= size: continue
+                if j < 0 or j >= size: continue
+                if self.board[i][j] == ' ':
+                    if not ((i, j) in self.children):
+                        self.children.add((i, j))
+                        self.to_remove.append((i, j))
 
         value = float("-inf")
         l = list(self.children)
@@ -455,9 +478,6 @@ class node:
         #             if value != None:
         #                 res += value
 
-
-
-
     def vertical(self):
         x = self.move[0]
         y = self.move[1]
@@ -487,9 +507,6 @@ class node:
             y += 1
         return rk(st)
 
-
-
-
     def right_diagonal(self):
         x = self.move[0] - 5
         y = self.move[1] + 5
@@ -507,7 +524,6 @@ class node:
             x += 1
             y -= 1
         return rk(st)
-
 
 # test
 def print_caro_table(board):
@@ -547,17 +563,17 @@ tb = [
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
 
 ]
-max_depth = 5
-start = time.time()
-move = get_move(tb, 20)
-print(move)
-print(time.time() - start)
-print(count)
-print(count_leaf)
-tb[move[0]][move[1]] = 'o'
-print_caro_table(tb)
-print(delay_time)
-print(count_id)
+# max_depth = 5
+# start = time.time()
+# move = get_move(tb, 20)
+# print(move)
+# print(time.time() - start)
+# print(count)
+# print(count_leaf)
+# tb[move[0]][move[1]] = 'o'
+# print_caro_table(tb)
+# print(delay_time)
+# print(count_id)
 
 # # print(compute(tb))
 #
@@ -581,24 +597,6 @@ print(count_id)
 # s = "xooxoooooo   o  xxxo"
 # print(rk(s))
 # print(brute_force(s))
-
-
-
-# Ví dụ sử dụng
-# board = [
-#     [1, 2, 3, 4, 5, 6, 7],
-#     [8, 9, 10, 11, 12, 13, 14],
-#     [15, 16, 17, 18, 19, 20, 21],
-#     [22, 23, 24, 25, 26, 27, 28],
-#     [29, 30, 31, 32, 33, 34, 35],
-#     [36, 37, 38, 39, 40, 41, 42],
-#     [43, 44, 45, 46, 47, 48, 49]
-# ]
-# #
-# all_lines = get_all_lines(tb)
-# for line in all_lines:
-#     print(line)
-
 
 # [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
 # [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],

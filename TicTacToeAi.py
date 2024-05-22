@@ -188,6 +188,8 @@ def init_node(board):
     init.id = get_id(board)
     init.children = get_children(board)
     init.cache = compute(board)
+    init.board = board
+    init.depth = 0
     return init
 
 def get_move(board, size):

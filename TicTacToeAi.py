@@ -191,17 +191,9 @@ def init_node(board):
     init.depth = 0
     return init
 
-# def move_as_o(board):
-#     size = len(board)
-#     init = init_node(board)
-#     next_action = None
-#     value = float("inf")
-#     alpha = float("-inf")
-#     beta = float("inf")
-#
-def get_move(board, size):
+def move_as_o(board):
     # Find all available positions on the board
-    size = int(size)
+    size = len(board)
     init = init_node(board)
     next_action = None
     value = float("inf") # role o as min value
@@ -237,6 +229,40 @@ def get_move(board, size):
     print("delay time: " + str(delay_time))
     print("cache hit: " + str(count_leaf - count_id))
     return next_action
+
+def move_as_x(board):
+    size = len(board)
+    init = init_node(board)
+    next_action = None
+    value = float("-inf")
+    alpha = float("-inf")
+    beta = float("inf")
+    lres = list()
+    cres = list()
+    l = list(init.children)
+    for c in l:
+        cur = node('x', c, init.cache, init.id, init)
+        cres.append((cur.move, cur.cache))
+        t = cur.min_value(alpha, beta)
+        lres.append(((c, t)))
+        if t > value:
+            value = t
+            next_action = c
+        alpha = max(alpha, t)
+        if value == float("inf"): break
+    print(value)
+    print(lres)
+    print(cres)
+    print("total node: " +  str(count))
+    print("total leaf: " + str(count_leaf))
+    print("delay time: " + str(delay_time))
+    print("cache hit: " + str(count_leaf - count_id))
+    return next_action
+
+def get_move(board, size):
+    # return move_as_o(board)
+    return move_as_x(board)
+    
 
 
 #x max, o min

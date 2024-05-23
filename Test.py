@@ -6,16 +6,15 @@ import queue
 import random
 def print_caro_table(board):
     size = len(board)
-    for row in range(size):
-        line = ""
-        for col in range(size):
-            if board[row][col] == ' ':
-                line += "   "  # Use spaces for empty cells
-            else:line += f" {board[row][col]} "
-            if col < size - 1:
-                line += "|"  # Add vertical separator
-        print(line)
-        if row < size - 1: print("---" * size)
+
+    # Print column headers
+    print("   " + " ".join([f"{i:2}" for i in range(size)]))
+
+    # Print each row with row headers
+    for i in range(size):
+        row = board[i]
+        print(f"{i:2} " + " ".join(row))
+
 # tb = [
 #     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
 #     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -45,14 +44,14 @@ tb = [
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', 'x', 'o', 'o', 'o', 'o', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', 'x', 'x', 'x', 'x', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x', ' ', 'o', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
-    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', 'x', ' ', ' ', ' ', ' ', ' ', 'o', 'x', 'x', ' ', 'o', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', 'x', 'o', 'o', 'o', 'o', 'x', 'o', 'x', 'x', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', 'x', ' ', 'o', 'x', 'x', 'x', 'x', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x', 'x', 'o', 'x', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', 'o', 'x', 'x', 'x', 'x', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', 'o', 'o', 'x', ' ', 'x', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', 'o', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -66,7 +65,7 @@ start = time.time()
 move = ai.get_move(tb, 20)
 print(move)
 print(time.time() - start)
-tb[move[0]][move[1]] = 'o'
+tb[move[0]][move[1]] = 'x'
 print_caro_table(tb)
 
 # # print(compute(tb))
@@ -127,3 +126,40 @@ class tnode:
 # print("{:.6f}".format(time.time() - start))
 #
 
+# # Find all available positions on the board
+    # size = int(size)
+    # init = init_node(board)
+    # next_action = None
+    # value = float("inf") # role o as min value
+    # # value = float("-inf") # role x as max value
+    # alpha = float("-inf")
+    # beta = float("inf")
+    # lres = list()
+    # cres = list()
+    # l = list(init.children)
+    # for c in l:
+    #     cur = node('o', c, init.cache, init.id, init) # role o as min value
+    #     cres.append((cur.move, cur.cache))
+    #     t = cur.max_value(alpha, beta)
+    #     lres.append((c, t))
+    #     if t < value:
+    #         value = t
+    #         next_action = c
+    #     beta = min(beta, t)
+    #     if value == float("-inf"): break
+    #
+    #     # cur = node('x', c, board, children, 1, size) # role x as max value
+    #     # t = cur.min_value(alpha, beta)
+    #     # if (t > value):
+    #     #     value = t
+    #     #     next_action = c
+    #     # alpha = max(alpha, t)
+    #     # if value == float("inf"): break
+    # print(value)
+    # print(lres)
+    # print(cres)
+    # print("total node: " +  str(count))
+    # print("total leaf: " + str(count_leaf))
+    # print("delay time: " + str(delay_time))
+    # print("cache hit: " + str(count_leaf - count_id))
+    # return next_action

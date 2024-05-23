@@ -1,5 +1,4 @@
-import copy
-import random
+import heapq
 import time
 global max_depth, hashT, HEURISTIC_SOCRES, R, Q, R5, R6, A, B, cacheT, count, count_leaf, count_id, delay_time, total
 total = 0
@@ -304,6 +303,8 @@ class node:
             self.cache = self.computeCache(lastCache)
         if self.depth == max_depth: return
 
+    def __lt__(self, other):
+        return self.cache < other.cache
     def restore(self):
         self.board[self.move[0]][self.move[1]] = ' '
         for i in self.to_remove:
@@ -315,7 +316,7 @@ class node:
             global count_leaf
             count_leaf += 1
             return self.cache
-        if self.cache == float("-inf"):
+        if self.cache == float("inf"):
             self.restore()
             return self.cache
 
@@ -334,15 +335,28 @@ class node:
                         self.to_remove.append((i, j))
 
         value = float("inf")
-        l = list(self.children)
-        for c in l:
-            cur = node('o', c, self.cache, self.id, self)
-            # cur = node('o', c, self.board, self.children, self.depth + 1, len(self.board), self.cache, self.id)
-            t = cur.max_value(alpha, beta)
-            value = min(value, t)
-            beta = min(beta, t)
-            if alpha >= beta:
-                break
+        if self.depth < max_depth - 1 and False:
+            li = list()
+            for c in self.children:
+                li.append(node('o', c, self.cache, self.id, self))
+            heapq.heapify(li)
+            while len(li) != 0:
+                cur = heapq.heappop(li)
+                t = cur.max_value(alpha, beta)
+                value = min(value, t)
+                beta = min(beta, t)
+                if alpha >= beta:
+                    break
+        else:
+            li = list(self.children)
+            for c in li:
+                cur = node('o', c, self.cache, self.id, self)
+                # cur = node('o', c, self.board, self.children, self.depth + 1, len(self.board), self.cache, self.id)
+                t = cur.max_value(alpha, beta)
+                value = min(value, t)
+                beta = min(beta, t)
+                if alpha >= beta:
+                    break
 
         self.restore()
         return value
@@ -352,7 +366,7 @@ class node:
             global count_leaf
             count_leaf += 1
             return self.cache
-        if self.cache == float("inf"):
+        if self.cache == float("-inf"):
             self.restore()
             return self.cache
 

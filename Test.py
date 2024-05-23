@@ -1,6 +1,9 @@
 import TicTacToeAi as ai
+import TicTacToeAi_5 as test_ai
 import time
-
+import heapq
+import queue
+import random
 def print_caro_table(board):
     size = len(board)
     for row in range(size):
@@ -8,13 +11,11 @@ def print_caro_table(board):
         for col in range(size):
             if board[row][col] == ' ':
                 line += "   "  # Use spaces for empty cells
-            else:
-                line += f" {board[row][col]} "  # Use the value from the board
+            else:line += f" {board[row][col]} "
             if col < size - 1:
                 line += "|"  # Add vertical separator
         print(line)
-        if row < size - 1:
-            print("---" * size)  # Add horizontal separator
+        if row < size - 1: print("---" * size)
 tb = [
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
@@ -89,3 +90,39 @@ print_caro_table(tb)
 # [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
 # [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
 # [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+class tnode:
+    def __init__(self, number):
+        print("init")
+        self.n = number
+    def __lt__(self, other):
+        return self.n < other.n
+    def __str__(self):
+        return str(self.number)
+# input = list()
+# for i in range(1000000):
+#     input.append(tnode(random.randint(0, 20)))
+# start = time.time()
+# l = list()
+# for i in range(1000000):
+#     cur = tnode(random.randint(0, 20))
+#     heapq.heappush(l, cur)
+#
+# while len(l) != 0:
+#     heapq.heappop(l)
+#
+# print("{:.6f}".format(time.time() - start))
+#
+#
+# start = time.time()
+# l = list()
+# for i in range(1000000):
+#     cur = tnode(random.randint(0, 20))
+#     l.append(cur)
+# heapq.heapify(l)
+# while len(l) != 0:
+#     heapq.heappop(l)
+#
+# print("{:.6f}".format(time.time() - start))
+#
+
+

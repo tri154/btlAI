@@ -218,6 +218,10 @@ def get_move(board, size):
     print(value)
     print(lres)
     print(cres)
+    print("total node: " +  str(count))
+    print("total leaf: " + str(count_leaf))
+    print("delay time: " + str(delay_time))
+    print("cache hit: " + str(count_leaf - count_id))
     return next_action
 
 
@@ -310,7 +314,7 @@ class node:
             global count_leaf
             count_leaf += 1
             return self.cache
-        if self.cache == float("-inf"):
+        if self.cache == float("inf"):
             self.restore()
             return self.cache
         value = float("inf")
@@ -331,16 +335,21 @@ class node:
             global count_leaf
             count_leaf += 1
             return self.cache
-        if self.cache == float("inf"):
+        if self.cache == float("-inf"):
             self.restore()
             return self.cache
-
         value = float("-inf")
         l = list(self.children)
         for c in l:
             cur = node('x', c, self.board, self.children, self.depth + 1, len(self.board), self.cache, self.id)
             t = cur.min_value(alpha, beta)
             value = max(value, t)
+
+            # if self.move == (9, 5) and self.depth == 1:
+            #     print(cur.move)
+            #     print(value)
+            #     input()
+
             alpha = max(alpha, t)
             if (alpha >= beta):
                 break
@@ -534,17 +543,17 @@ tb = [
     [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
 
 ]
-max_depth = 5
-start = time.time()
-move = get_move(tb, 20)
-print(move)
-print(time.time() - start)
-print(count)
-print(count_leaf)
-tb[move[0]][move[1]] = 'o'
-print_caro_table(tb)
-print(delay_time)
-print(count_id)
+# max_depth = 5
+# start = time.time()
+# move = get_move(tb, 20)
+# print(move)
+# print(time.time() - start)
+# print(count)
+# print(count_leaf)
+# tb[move[0]][move[1]] = 'o'
+# print_caro_table(tb)
+# print(delay_time)
+# print(count_id)
 
 # # print(compute(tb))
 #

@@ -192,35 +192,43 @@ def init_node(board):
     return init
 
 def move_as_o(board):
-    # Find all available positions on the board
     size = len(board)
     init = init_node(board)
     next_action = None
-    value = float("inf") # role o as min value
-    # value = float("-inf") # role x as max value
+    value = float("inf")
     alpha = float("-inf")
     beta = float("inf")
     lres = list()
     cres = list()
-    l = list(init.children)
-    for c in l:
-        cur = node('o', c, init.cache, init.id, init) # role o as min value
+
+    # l = list(init.children)
+    # for c in l:
+    #     cur = node('o', c, init.cache, init.id, init) # role o as min value
+    #     cres.append((cur.move, cur.cache))
+    #     t = cur.max_value(alpha, beta)
+    #     lres.append((c, t))
+    #     if t < value:
+    #         value = t
+    #         next_action = c
+    #     beta = min(beta, t)
+    #     if value == float("-inf"): break
+
+    l = list()
+    for c in init.children:
+        cur = node('o', c, init.cache, init.id, init)
+        l.append(cur)
+    heapq.heapify(l)
+    while len(l) != 0:
+        cur = heapq.heappop(l)
         cres.append((cur.move, cur.cache))
         t = cur.max_value(alpha, beta)
-        lres.append((c, t))
+        lres.append((cur.move, t))
         if t < value:
             value = t
-            next_action = c
+            next_action = cur.move
         beta = min(beta, t)
         if value == float("-inf"): break
 
-        # cur = node('x', c, board, children, 1, size) # role x as max value
-        # t = cur.min_value(alpha, beta)
-        # if (t > value):
-        #     value = t
-        #     next_action = c
-        # alpha = max(alpha, t)
-        # if value == float("inf"): break
     print(value)
     print(lres)
     print(cres)
@@ -239,15 +247,32 @@ def move_as_x(board):
     beta = float("inf")
     lres = list()
     cres = list()
-    l = list(init.children)
-    for c in l:
-        cur = node('x', c, init.cache, init.id, init)
-        cres.append((cur.move, cur.cache))
+
+    # l = list(init.children)
+    # for c in l:
+    #     cur = node('x', c, init.cache, init.id, init)
+    #     cres.append((cur.move, cur.cache))
+    #     t = cur.min_value(alpha, beta)
+    #     lres.append((c, t))
+    #     if t > value:
+    #         value = t
+    #         next_action = c
+    #     alpha = max(alpha, t)
+    #     if value == float("inf"): break
+
+    l = list()
+    for c in init.children:
+        cur = node('x', c, init.cache, init.id, init, True)
+        l.append(cur)
+    heapq.heapify(l)
+    while len(l) != 0:
+        cur = heapq.heappop(l)
+        cres.append((cur.move, -cur.cache))
         t = cur.min_value(alpha, beta)
-        lres.append(((c, t)))
+        lres.append((cur.move, t))
         if t > value:
             value = t
-            next_action = c
+            next_action = cur.move
         alpha = max(alpha, t)
         if value == float("inf"): break
     print(value)
@@ -260,9 +285,11 @@ def move_as_x(board):
     return next_action
 
 def get_move(board, size):
-    # return move_as_o(board)
-    return move_as_x(board)
-    
+    return move_as_o(board)
+
+    # move_as_o
+    # move_as_x
+
 
 
 #x max, o min

@@ -191,6 +191,14 @@ def init_node(board):
     init.depth = 0
     return init
 
+# def move_as_o(board):
+#     size = len(board)
+#     init = init_node(board)
+#     next_action = None
+#     value = float("inf")
+#     alpha = float("-inf")
+#     beta = float("inf")
+#
 def get_move(board, size):
     # Find all available positions on the board
     size = int(size)
@@ -274,7 +282,7 @@ def get_id(board):
     return res;
 
 class node:
-    def __init__(self, role=None, move=None, lastCache=None, lastID=None, parent=None):
+    def __init__(self, role=None, move=None, lastCache=None, lastID=None, parent=None, reverse=False):
         if parent is None:
             return
         global count_id
@@ -290,18 +298,31 @@ class node:
         x = move[0]
         y = move[1]
         self.id = lastID - ord(' ')*pow(A, x)*pow(B, y) + ord(self.role)*pow(A, x)*pow(B, y)
-        if self.depth == max_depth:
-            self.cache = cacheT.get(self.id)
-            if self.cache is None:
-                count_id += 1
-                self.cache = self.computeCache(lastCache)
-                cacheT[self.id] = self.cache
-            # else:
-            #     del cacheT[self.id]
-        else:
-        # self.cache = self.computeCache(lastCache)
-            self.cache = self.computeCache(lastCache)
-        if self.depth == max_depth: return
+
+        # if self.depth == max_depth:
+        #     self.cache = cacheT.get(self.id)
+        #     if self.cache is None:
+        #         count_id += 1
+        #         self.cache = self.computeCache(lastCache)
+        #         cacheT[self.id] = self.cache
+        #     else:
+        #         self.board[x][y] = self.role
+        #         testValue = compute(self.board)
+        #         if testValue != self.cache:
+        #             print_caro_table(self.board)
+        #             print(testValue)
+        #             print(self.cache)
+        #             print(self.id)
+        #             input()
+        #         self.board[x][y] = ' '
+
+
+        # else:
+        self.cache = self.computeCache(lastCache)
+            # self.cache = self.computeCache(lastCache)
+        self.reverse = reverse
+        if reverse:
+            self.cache = -self.cache
 
     def __lt__(self, other):
         return self.cache < other.cache
@@ -312,12 +333,12 @@ class node:
         self.children.add(self.move)
 
     def min_value(self, alpha, beta):
+        if self.reverse: self.cache = -self.cache
         if self.depth == max_depth:
             global count_leaf
             count_leaf += 1
             return self.cache
         if self.cache == float("inf"):
-            self.restore()
             return self.cache
 
         x = self.move[0]
@@ -335,7 +356,7 @@ class node:
                         self.to_remove.append((i, j))
 
         value = float("inf")
-        if self.depth < max_depth - 1 and False:
+        if self.depth < max_depth - 1:
             li = list()
             for c in self.children:
                 li.append(node('o', c, self.cache, self.id, self))
@@ -362,12 +383,12 @@ class node:
         return value
 
     def max_value(self, alpha, beta):
+        if self.reverse: self.cache = -self.cache
         if self.depth == max_depth:
             global count_leaf
             count_leaf += 1
             return self.cache
         if self.cache == float("-inf"):
-            self.restore()
             return self.cache
 
         x = self.move[0]
@@ -385,15 +406,28 @@ class node:
                         self.to_remove.append((i, j))
 
         value = float("-inf")
-        l = list(self.children)
-        for c in l:
-            # cur = node('x', c, self.board, self.children, self.depth + 1, len(self.board), self.cache, self.id)
-            cur = node('x', c, self.cache, self.id, self)
-            t = cur.min_value(alpha, beta)
-            value = max(value, t)
-            alpha = max(alpha, t)
-            if (alpha >= beta):
-                break
+        if self.depth < max_depth - 1:
+            li = list()
+            for c in self.children:
+                li.append(node('x', c, self.cache, self.id, self, True))
+            heapq.heapify(li)
+            while len(li) != 0:
+                cur = heapq.heappop(li)
+                t = cur.min_value(alpha, beta)
+                value = max(value, t)
+                alpha = max(alpha, t)
+                if alpha >= beta:
+                    break
+        else:
+            li = list(self.children)
+            for c in li:
+                # cur = node('x', c, self.board, self.children, self.depth + 1, len(self.board), self.cache, self.id)
+                cur = node('x', c, self.cache, self.id, self)
+                t = cur.min_value(alpha, beta)
+                value = max(value, t)
+                alpha = max(alpha, t)
+                if alpha >= beta:
+                    break
         self.restore()
         return value
     def computeCache(self, lastCache):

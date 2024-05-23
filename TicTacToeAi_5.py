@@ -278,17 +278,17 @@ class node:
         self.board = board
         self.depth = depth
         self.id = lastID - ord(' ')*pow(A, x)*pow(B, y) + ord(self.role)*pow(A, x)*pow(B, y)
-        if depth == max_depth:
-            self.cache = cacheT.get(self.id)
-            if (self.cache == None):
-                count_id += 1
-                self.cache = self.computeCache(lastCache)
-                cacheT[self.id] = self.cache
-            # else:
-            #     del cacheT[self.id]
-        else:
-        # self.cache = self.computeCache(lastCache)
-            self.cache = self.computeCache(lastCache)
+        # if depth == max_depth:
+        #     self.cache = cacheT.get(self.id)
+        #     if (self.cache == None):
+        #         count_id += 1
+        #         self.cache = self.computeCache(lastCache)
+        #         cacheT[self.id] = self.cache
+        #     # else:
+        #     #     del cacheT[self.id]
+        # else:
+        self.cache = self.computeCache(lastCache)
+            # self.cache = self.computeCache(lastCache)
         if depth == max_depth: return
         board[x][y] = role
         self.children = children

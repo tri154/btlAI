@@ -69,6 +69,9 @@ def rk(s):
     cX2 = 0
     cO2 = 0
 
+    cX3 = 0
+    cO3 = 0
+
     for i in range(len(s)):
         count += 1
         c = s[i]
@@ -80,6 +83,8 @@ def rk(s):
             if value != None:
                 if h in countX2: cX2 += 1
                 if h in countO2: cO2 += 1
+                if h in countX3: cX3 += 1
+                if h in countO3: cO3 += 1
                 res += value
         if count == 6:
             h = (h * R + ord(c)) % Q
@@ -87,6 +92,8 @@ def rk(s):
             if value != None:
                 if h in countX2: cX2 += 1
                 if h in countO2: cO2 += 1
+                if h in countX3: cX3 += 1
+                if h in countO3: cO3 += 1
                 res += value
             if i == len(s) - 1:
                 h = (h + Q - R6 * ord(s[i - 5]) % Q) % Q
@@ -94,6 +101,8 @@ def rk(s):
                 if value != None:
                     if h in countX2: cX2 += 1
                     if h in countO2: cO2 += 1
+                    if h in countX3: cX3 += 1
+                    if h in countO3: cO3 += 1
                     res += value
         if count > 6:
             h = (h + Q - R6 * ord(s[i - 6]) % Q) % Q
@@ -101,12 +110,16 @@ def rk(s):
             if value != None:
                 if h in countX2: cX2 += 1
                 if h in countO2: cO2 += 1
+                if h in countX3: cX3 += 1
+                if h in countO3: cO3 += 1
                 res += value
             h = (h * R + ord(c)) % Q
             value = hashT.get(h)
             if value != None:
                 if h in countX2: cX2 += 1
                 if h in countO2: cO2 += 1
+                if h in countX3: cX3 += 1
+                if h in countO3: cO3 += 1
                 res += value
             if i == len(s) - 1:
                 h = (h + Q - R6 * ord(s[i - 5]) % Q) % Q
@@ -114,18 +127,22 @@ def rk(s):
                 if value != None:
                     if h in countX2: cX2 += 1
                     if h in countO2: cO2 += 1
+                    if h in countX3: cX3 += 1
+                    if h in countO3: cO3 += 1
 
-    return [res, cX2, cO2]
+    return [res, cX2, cO2, cX3, cO3]
 
 def compute(b):
     lines = get_all_lines(b)
-    res = [0, 0, 0]
+    res = [0, 0, 0, 0, 0]
     for i in lines:
         lv = rk(i)
         for i in range(len(res)):
             res[i] += lv[i]
     if res[1] >= 2: res[0] += 500000
     if res[2] >= 2: res[0] += -500000
+    if res[3] >= 3: res[0] += (res[3] // 3) * 500
+    if res[4] >= 3: res[0] += (res[4] // 3) * -500
     return res
 
 
@@ -240,18 +257,21 @@ hashT = {
 
     16338 : 100,
     13314 : 100,
-    14471 : -100,
-    22902 : -100,
 
-    21212 : 25,
-    6683 : 25,
-    21640 : -25,
-    17530 : -25,
+    21212 : 50,
+    6683 : 50,
 
     17156 : 10,
     7550 : 10,
     10574 : 10,
     20180 : 10,
+
+    14471 : -100,
+    22902 : -100,
+
+    21640 : -50,
+    17530 : -50,
+
     11986 : -10,
     3987 : -10,
     23037 : -10,
@@ -269,6 +289,14 @@ countX2 = {
     26973,
 
 }
+countX3 = {
+    21212,
+    6683,
+    17156,
+    7550,
+    10574,
+    20180,
+}
 countO2 = {
     20055,
     15645,
@@ -279,6 +307,15 @@ countO2 = {
     23193,
     13885,
 }
+countO3 = {
+    21640,
+    17530,
+    11986,
+    3987,
+    23037,
+    3555
+}
+
 
 R = 256
 R5 = 16768
@@ -335,12 +372,12 @@ def compute_brute_force(b):
     if countO >= 2: return float("-inf")
     return res
 
-# def toHash(str):
-#     t  = 0
-#     for c in str:
-#         t = (R * t + ord(c)) % Q
-#     return t
-#
+def toHash(str):
+    t  = 0
+    for c in str:
+        t = (R * t + ord(c)) % Q
+    return t
+
 
 # for key in HEURISTIC_SCORES:
 #     t = toHash(key)
@@ -479,8 +516,8 @@ def get_children(board):
     for t in bound:
         x = t[0]
         y = t[1]
-        for i in range(x - 2, x + 3):
-            for j in range(y - 2, y + 3):
+        for i in range(x - 1, x + 2):
+            for j in range(y - 1, y + 2):
                 if i < 0 or i >= size: continue
                 if j < 0 or j >= size: continue
                 if board[i][j] == ' ':
@@ -533,7 +570,13 @@ class node:
             #     print(self.cache)
             #     input()
 
-        # if self.role == 'x' and self.move == (7, 10) and self.depth == 7:
+        # self.cache = self.computeCache(lastCache)
+        # self.board[x][y] = self.role
+        # test_value = compute(self.board)
+        # self.board[x][y] = ' '
+        # if test_value[0] != self.cache[0]:
+        #     print_caro_table(self.board)
+        #     print(test_value)
         #     print(self.cache)
         #     input()
         self.reverse = reverse
@@ -659,7 +702,7 @@ class node:
     def computeCache(self, lastCache):
         x = self.move[0]
         y = self.move[1]
-        res = [0, 0, 0]
+        res = [0, 0, 0, 0, 0]
 
         before = self.computeBoardRabinKarp()
 
@@ -672,12 +715,17 @@ class node:
         res[0] = lastCache[0] + after[0] - before[0]
         res[1] = lastCache[1] + after[1] - before[1]
         res[2] = lastCache[2] + after[2] - before[2]
+        res[3] = lastCache[3] + after[3] - before[3]
+        res[4] = lastCache[4] + after[4] - before[4]
 
         if lastCache[1] >= 2 and res[1] < 2: res[0] -= 500000
         if lastCache[2] >= 2 and res[2] < 2: res[0] += 500000
 
         if lastCache[1] < 2 and res[1] >= 2: res[0] += 500000
         if lastCache[2] < 2 and res[2] >= 2: res[0] -= 500000
+
+        if lastCache[3] != res[3]: res[0] = res[0] - (lastCache[3] // 3) * 500 + (res[3] // 3) * 500
+        if lastCache[4] != res[4]: res[0] = res[0] + (lastCache[4] // 3) * 500 - (res[4] // 3) * 500
 
         return res
 
@@ -687,9 +735,12 @@ class node:
         rd = self.right_diagonal()
         ld = self.left_diagonal()
         res = h[0] + v[0] + rd[0] + ld[0]
-        cX = h[1] + v[1] + rd[1] + ld[1]
-        cO = h[2] + v[2] + rd[2] + ld[2]
-        return [res, cX, cO]
+        cX2 = h[1] + v[1] + rd[1] + ld[1]
+        cO2 = h[2] + v[2] + rd[2] + ld[2]
+        cX3 = h[3] + v[3] + rd[3] + ld[3]
+        cO3 = h[4] + v[4] + rd[4] + ld[4]
+
+        return [res, cX2, cO2, cX3, cO3]
 
     def horizontal(self):
         x = self.move[0]

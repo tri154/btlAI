@@ -1,28 +1,15 @@
 import heapq
 import time
-import copy
-import random
-global max_depth, hashT, HEURISTIC_SCORE, R, Q, R5, R6, A, B, cacheT, count, count_leaf, count_id, delay_time, countX, countO, ZobristTable
-# max_depth = 7
+global max_depth, hashT, HEURISTIC_SCORE, R, Q, R5, R6, A, B, cacheT, count, count_leaf, count_id, delay_time, total, countX, countO
+# max_depth = 6
+total = 0
 delay_time = 0
 count_id = 0
 cacheT = dict()
+A = 3
+B = 5
 count = 0
 count_leaf = 0
-ZobristTable = None
-
-def indexOf(c):
-    if c == 'x': return 0
-    if c == 'o': return 1
-
-global minV, maxV
-minV = 0
-maxV = pow(2, 64)
-def randomInt():
-    return random.randint(minV, maxV)
-def init_Zobrist_table(size):
-    global ZobristTable
-    ZobristTable = [[[randomInt() for k in range(2)] for j in range(size)] for i in range(size)]
 
 def get_all_lines(board):
     size = len(board)
@@ -66,9 +53,8 @@ def rk(s):
     h = 0
     res = 0
     count = 0
-    cX2 = 0
-    cO2 = 0
-
+    cX = 0
+    cO = 0
     for i in range(len(s)):
         count += 1
         c = s[i]
@@ -78,55 +64,56 @@ def rk(s):
             h = (h * R + ord(c)) % Q
             value = hashT.get(h)
             if value != None:
-                if h in countX2: cX2 += 1
-                if h in countO2: cO2 += 1
+                if h in countX: cX += 1
+                if h in countO: cO += 1
                 res += value
         if count == 6:
             h = (h * R + ord(c)) % Q
             value = hashT.get(h)
             if value != None:
-                if h in countX2: cX2 += 1
-                if h in countO2: cO2 += 1
+                if h in countX: cX += 1
+                if h in countO: cO += 1
                 res += value
             if i == len(s) - 1:
                 h = (h + Q - R6 * ord(s[i - 5]) % Q) % Q
                 value = hashT.get(h)
                 if value != None:
-                    if h in countX2: cX2 += 1
-                    if h in countO2: cO2 += 1
+                    if h in countX: cX += 1
+                    if h in countO: cO += 1
                     res += value
         if count > 6:
             h = (h + Q - R6 * ord(s[i - 6]) % Q) % Q
             value = hashT.get(h)
             if value != None:
-                if h in countX2: cX2 += 1
-                if h in countO2: cO2 += 1
+                if h in countX: cX += 1
+                if h in countO: cO += 1
                 res += value
             h = (h * R + ord(c)) % Q
             value = hashT.get(h)
             if value != None:
-                if h in countX2: cX2 += 1
-                if h in countO2: cO2 += 1
+                if h in countX: cX += 1
+                if h in countO: cO += 1
                 res += value
             if i == len(s) - 1:
                 h = (h + Q - R6 * ord(s[i - 5]) % Q) % Q
                 value = hashT.get(h)
                 if value != None:
-                    if h in countX2: cX2 += 1
-                    if h in countO2: cO2 += 1
-
-    return [res, cX2, cO2]
+                    if h in countX: cX += 1
+                    if h in countO: cO += 1
+                    res += value
+    return [res , cX, cO]
 
 def compute(b):
     lines = get_all_lines(b)
     res = [0, 0, 0]
     for i in lines:
         lv = rk(i)
-        for i in range(len(res)):
-            res[i] += lv[i]
-    if res[1] >= 2: res[0] += 500000
-    if res[2] >= 2: res[0] += -500000
+        res[0] += lv[0]
+        res[1] += lv[1]
+        res[2] += lv[2]
     return res
+
+
 
 
 
@@ -163,121 +150,70 @@ HEURISTIC_SCORES = {
         " oooo ": -1000000,
         " xxxx ":  1000000,
 
-        "oxxxx ": 100000,
-        " xxxxo": 100000,
 
+        "oxxxx ": 1000,
+        " xxxxo": 1000,
         " xxx ": 1000,
-        " x xx ": 1000,
-        " xx x ": 1000,
 
-        "x xxx": 50000,
-        "xx xx": 50000,
-        "xxx x": 50000,
 
-        " oooox": -100000,
-        "xoooo ": -100000,
-
+        " oooox": -1000,
+        "xoooo ": -1000,
         " ooo ": -1000,
-        " oo o ": -1000,
-        " o oo ": -1000,
-
-        "o ooo": -50000,
-        "oo oo": -50000,
-        "ooo o": -50000,
 
 
-        "  xxxo": 100,
-        "oxxx  ": 100,
-
-        "  xx  ": 50,
-        " x x ": 50,
-
-        "oxx   ": 10,
-        "ox x  ": 10,
-        "   xxo": 10,
-        "  x xo": 10,
-
-        "  ooox": -100,
-        "xooo  ": -100,
-
-        "  oo  ": -50,
-        " o o ": -50,
-
-        "xoo   ": -10,
-        "xo o  ": -10,
-        "   oox": -10,
-        "  o ox": -10,
-}
-
+        " xxxo": 100,
+        "oxxx ": 100,
+        " ooox": -100,
+        "xooo ": -100,
+        # " xx  ": 10,
+        # "  xx ": 10,
+        # " oo ": -50
+    }
+# hashT = {
+#     6628 : float("-inf"),
+#     22020 : float("inf"),
+#     19967 : float("-inf"),
+#     7869 : float("inf"),
+#     8361 : 100000000,
+#     7948 : 100000000,
+#     20055 : -100000000,
+#     15645 : -100000000,
+#     2841 : 1000,
+#     2920 : 150,
+#     8425 : 150,
+#     1053 : -150,
+#     20056 : -150,
+#     965 : -1000,
+# }
 hashT = {
-    6628 : float("-inf"),
+    6628  : float("-inf"),
     22020 : float("inf"),
 
-    19967 : -1000000,
-    7869 : 1000000,
+    19967: float("-inf"),
+    7869: float("inf"),
 
-    8361 : 100000,
-    7948 : 100000,
+    8361: 1000,
+    7948: 1000,
+    2841: 1000,
 
-    2841 : 1000,
-    2105 : 1000,
-    11711 : 1000,
+    20055: -1000,
+    15645: -1000,
+    965: -1000,
 
-    16256 : 50000,
-    25862 : 50000,
-    26973 : 50000,
-
-    20055 : -100000,
-    15645 : -100000,
-
-    965 : -1000,
-    9051 : -1000,
-    1052 : -1000,
-
-    15194 : -50000,
-    23193 : -50000,
-    13885 : -50000,
-
-    16338 : 100,
-    13314 : 100,
-    14471 : -100,
-    22902 : -100,
-
-    21212 : 25,
-    6683 : 25,
-    21640 : -25,
-    17530 : -25,
-
-    17156 : 10,
-    7550 : 10,
-    10574 : 10,
-    20180 : 10,
-    11986 : -10,
-    3987 : -10,
-    23037 : -10,
-    3555 : -10,
-
+    2920: 100,
+    8425: 100,
+    1053: -100,
+    20056: -100,
 }
-countX2 = {
+countX = {
     8361,
     7948,
-    2841,
-    2105,
-    11711,
-    16256,
-    25862,
-    26973,
-
+    2841
 }
-countO2 = {
+countO = {
     20055,
     15645,
-    965,
-    9051,
-    1052,
-    15194,
-    23193,
-    13885,
+    965
 }
 
 R = 256
@@ -325,6 +261,13 @@ def compute_brute_force(b):
                         d[t] = 1
     countX = 0
     countO = 0
+    # "oxxxx ": 100000001,
+    # " xxxxo": 100000001,
+    # " xxx ": 1001,
+    #
+    # " oooox": -100000010,
+    # "xoooo ": -100000010,
+    # " ooo ": -1010,
     for k, v in d.items():
         print(str(k) + " " + str(v))
     for key in d:
@@ -341,7 +284,7 @@ def compute_brute_force(b):
 #         t = (R * t + ord(c)) % Q
 #     return t
 #
-
+# #
 # for key in HEURISTIC_SCORES:
 #     t = toHash(key)
 #     # if len(key) == 5:
@@ -355,7 +298,8 @@ def compute_brute_force(b):
     # print(str(t) + " : " + str(HEURISTIC_SCORES[key]) + ",")
 #
 
-
+# print(pow(R, 4) % Q)
+# print(pow(R, 5) % Q)
 def init_node(board):
     init = node()
     init.id = get_id(board)
@@ -375,6 +319,18 @@ def move_as_o(board):
     beta = float("inf")
     lres = list()
     cres = list()
+
+    # l = list(init.children)
+    # for c in l:
+    #     cur = node('o', c, init.cache, init.id, init) # role o as min value
+    #     cres.append((cur.move, cur.cache))
+    #     t = cur.max_value(alpha, beta)
+    #     lres.append((c, t))
+    #     if t < value:
+    #         value = t
+    #         next_action = c
+    #     beta = min(beta, t)
+    #     if value == float("-inf"): break
 
     l = list()
     for c in init.children:
@@ -398,7 +354,7 @@ def move_as_o(board):
     print("total node: " +  str(count))
     print("total leaf: " + str(count_leaf))
     print("delay time: " + str(delay_time))
-    print("cache hit: " + str(count_id))
+    print("cache hit: " + str(count_leaf - count_id))
     return next_action
 
 def move_as_x(board):
@@ -412,6 +368,18 @@ def move_as_x(board):
     lres = list()
     cres = list()
 
+    # l = list(init.children)
+    # for c in l:
+    #     cur = node('x', c, init.cache, init.id, init)
+    #     cres.append((cur.move, cur.cache))
+    #     t = cur.min_value(alpha, beta)
+    #     lres.append((c, t))
+    #     if t > value:
+    #         value = t
+    #         next_action = c
+    #     alpha = max(alpha, t)
+    #     if value == float("inf"): break
+
     l = list()
     for c in init.children:
         cur = node('x', c, init.cache, init.id, init, True)
@@ -421,12 +389,6 @@ def move_as_x(board):
         cur = heapq.heappop(l)
         cres.append((cur.move, -cur.cache[0]))
         t = cur.min_value(alpha, beta)
-
-        # if cur.role == 'x' and cur.move == (7, 10) and cur.depth == 1:
-        #     print(t)
-        #     input()
-
-
         lres.append((cur.move, t))
         if t > value:
             value = t
@@ -439,20 +401,17 @@ def move_as_x(board):
     print("total node: " +  str(count))
     print("total leaf: " + str(count_leaf))
     print("delay time: " + str(delay_time))
-    print("cache hit: " + str(count_id))
+    print("cache hit: " + str(count_leaf - count_id))
     return next_action
 
 def get_move(board, size):
-
-    global cacheT, ZobristTable
-    print(len(cacheT))
-    if len(cacheT) > 2000000:
-        cacheT = dict()
-    print(count_id)
-    # input("size bang **: ")
-    if ZobristTable == None:
-        init_Zobrist_table(size)
     return move_as_x(board)
+    # return move_as_o(board)
+
+    # move_as_o
+    # move_as_x
+
+
 
 #x max, o min
 def check_neighbor_blank(x, y, board, size):
@@ -479,8 +438,8 @@ def get_children(board):
     for t in bound:
         x = t[0]
         y = t[1]
-        for i in range(x - 2, x + 3):
-            for j in range(y - 2, y + 3):
+        for i in range(x - 1, x + 2):
+            for j in range(y - 1, y + 2):
                 if i < 0 or i >= size: continue
                 if j < 0 or j >= size: continue
                 if board[i][j] == ' ':
@@ -490,13 +449,10 @@ def get_children(board):
 def get_id(board):
     size = len(board)
     res = 0
-    global ZobristTable
     for i in range(size):
         for j in range(size):
             char = board[i][j]
-            if char == ' ': continue
-            piece = indexOf(char)
-            res ^= ZobristTable[i][j][piece]
+            res += ord(char) * pow(A, i) * pow(B, j)
     return res;
 
 class node:
@@ -515,28 +471,39 @@ class node:
         print(str(count) + " depth: " + str(self.depth))
         x = move[0]
         y = move[1]
-        piece = indexOf(self.role)
-        self.id = lastID ^ ZobristTable[x][y][piece]
-        # if self.depth == max_depth:
-        self.cache = copy.deepcopy(cacheT.get(self.id))
-        if self.cache is None:
-            self.cache = self.computeCache(lastCache)
-            cacheT[self.id] = copy.deepcopy(self.cache)
-        else:
-            count_id += 1
-            # self.board[x][y] = self.role
-            # test_value = compute(self.board)
-            # self.board[x][y] = ' '
-            # if test_value[0] != self.cache[0]:
-            #     print_caro_table(self.board)
-            #     print(test_value)
-            #     print(self.cache)
-            #     input()
+        self.id = lastID - ord(' ')*pow(A, x)*pow(B, y) + ord(self.role)*pow(A, x)*pow(B, y)
 
-        # if self.role == 'x' and self.move == (7, 10) and self.depth == 7:
-        #     print(self.cache)
-        #     input()
+        # if self.depth == max_depth:
+        #     self.cache = cacheT.get(self.id)
+        #     if self.cache is None:
+        #         count_id += 1
+        #         self.cache = self.computeCache(lastCache)
+        #         cacheT[self.id] = self.cache
+        #     else:
+        #         self.board[x][y] = self.role
+        #         testValue = compute(self.board)
+        #         if testValue != self.cache:
+        #             print_caro_table(self.board)
+        #             print(testValue)
+        #             print(self.cache)
+        #             print(self.id)
+        #             input()
+        #         self.board[x][y] = ' '
+
+
+        # else:
+        self.cache = self.computeCache(lastCache)
+            # self.cache = self.computeCache(lastCache)
+        # if self.depth > 2:
+        #     if abs(abs(self.cache[0]) - 1000000) < 10000:
+        #         if self.role == 'x': self.cache[0] = float("inf")
+        #         else: self.cache[0] = float("-inf")
+        if self.cache[1] >= 2:
+            self.cache[0] = float("inf")
+        if self.cache[2] >= 2:
+            self.cache[0] = float("-inf")
         self.reverse = reverse
+        # assert
         if reverse:
             self.cache[0] = -self.cache[0]
 
@@ -575,21 +542,11 @@ class node:
         if self.depth < max_depth - 1:
             li = list()
             for c in self.children:
-                nd = node('o', c, self.cache, self.id, self)
-                li.append(nd)
-                if nd.cache == float("-inf"): break
+                li.append(node('o', c, self.cache, self.id, self))
             heapq.heapify(li)
             while len(li) != 0:
                 cur = heapq.heappop(li)
                 t = cur.max_value(alpha, beta)
-
-                # if self.role == 'x' and self.move == (7, 10) and self.depth == 1:
-                #     print_caro_table(cur.board)
-                #     print(cur.cache)
-                #     print(cur.move)
-                #     print(t)
-                #     input()
-
                 value = min(value, t)
                 beta = min(beta, t)
                 if alpha >= beta:
@@ -598,6 +555,7 @@ class node:
             li = list(self.children)
             for c in li:
                 cur = node('o', c, self.cache, self.id, self)
+                # cur = node('o', c, self.board, self.children, self.depth + 1, len(self.board), self.cache, self.id)
                 t = cur.max_value(alpha, beta)
                 value = min(value, t)
                 beta = min(beta, t)
@@ -634,9 +592,7 @@ class node:
         if self.depth < max_depth - 1:
             li = list()
             for c in self.children:
-                nd = node('x', c, self.cache, self.id, self, True)
-                li.append(nd)
-                if nd.cache == float("-inf"): break
+                li.append(node('x', c, self.cache, self.id, self, True))
             heapq.heapify(li)
             while len(li) != 0:
                 cur = heapq.heappop(li)
@@ -648,6 +604,7 @@ class node:
         else:
             li = list(self.children)
             for c in li:
+                # cur = node('x', c, self.board, self.children, self.depth + 1, len(self.board), self.cache, self.id)
                 cur = node('x', c, self.cache, self.id, self)
                 t = cur.min_value(alpha, beta)
                 value = max(value, t)
@@ -657,29 +614,39 @@ class node:
         self.restore()
         return value
     def computeCache(self, lastCache):
+        start = time.time()
         x = self.move[0]
         y = self.move[1]
-        res = [0, 0, 0]
 
         before = self.computeBoardRabinKarp()
 
         self.board[x][y] = self.role
 
         after = self.computeBoardRabinKarp()
+
+        # test_value = compute(self.board)
         self.board[x][y] = ' '
+        # if test_value != lastCache + after - before:
+        #     print(lastCache)
+        #     print(after)
+        #     print(before)
+        #     print_caro_table(self.board)
+        #     self.board[x][y] = self.role
+        #     print()
+        #     print_caro_table(self.board)
+        #     self.board[x][y] = ' '
+        #     print(test_value)
+        #     print("error")
+        #     input()
+        diff = time.time() - start
+        print("{:.10f}".format(diff))
+        global delay_time
+        delay_time += diff
+        res = lastCache[0] + after[0] - before[0]
+        cX = lastCache[1] + after[1] - before[1]
+        cO = lastCache[2] + after[2] - before[2]
 
-
-        res[0] = lastCache[0] + after[0] - before[0]
-        res[1] = lastCache[1] + after[1] - before[1]
-        res[2] = lastCache[2] + after[2] - before[2]
-
-        if lastCache[1] >= 2 and res[1] < 2: res[0] -= 500000
-        if lastCache[2] >= 2 and res[2] < 2: res[0] += 500000
-
-        if lastCache[1] < 2 and res[1] >= 2: res[0] += 500000
-        if lastCache[2] < 2 and res[2] >= 2: res[0] -= 500000
-
-        return res
+        return [res, cX, cO]
 
     def computeBoardRabinKarp(self):
         h = self.horizontal()
@@ -701,7 +668,52 @@ class node:
             if i < 0: continue
             if i >= s: break
             st += b[x][i]
+        # value = rk(st)
+        # if value != brute_force(st):
+        #     print("error")
         return rk(st)
+
+        # for i in range(y - 5, y + 6):
+        #     if i < 0: continue
+        #     if i >= s:
+        #         if count >= 6:
+        #             h = (h + Q - R6 * ord(b[x][i - 6]) % Q) % Q
+        #             value = hashT.get(h)
+        #             if value != None:
+        #                 res += value
+        #     count += 1
+        #     c = b[x][i]
+        #     if count < 5:
+        #         h = (h * R + ord(c)) % Q
+        #     if count == 5:
+        #         h = (h * R + ord(c)) % Q
+        #         value = hashT.get(h)
+        #         if value != None:
+        #             res += value
+        #     if count == 6:
+        #         h = (h * R + ord(c)) % Q
+        #         value = hashT.get(h)
+        #         if value != None:
+        #             res += value
+        #         if i == y + 5:
+        #             h = (h + Q - R6 * ord(b[x][i - 5]) % Q) % Q
+        #             value = hashT.get(h)
+        #             if value != None:
+        #                 res += value
+        #     if count > 6:
+        #         h = (h + Q - R6 * ord(b[x][i - 6]) % Q) % Q
+        #         value = hashT.get(h)
+        #         if value != None:
+        #             res += value
+        #         h = (h * R + ord(c)) % Q
+        #         value = hashT.get(h)
+        #         if value != None:
+        #             res += value
+        #         if i == y + 5:
+        #             h = (h + Q - R6 * ord(b[x][i - 5]) % Q) % Q
+        #             value = hashT.get(h)
+        #             if value != None:
+        #                 res += value
 
     def vertical(self):
         x = self.move[0]
@@ -750,6 +762,7 @@ class node:
             y -= 1
         return rk(st)
 
+# test
 def print_caro_table(board):
     size = len(board)
     for row in range(size):
@@ -764,3 +777,85 @@ def print_caro_table(board):
         print(line)
         if row < size - 1:
             print("---" * size)  # Add horizontal separator
+tb = [
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', 'o', 'x', 'x', 'x', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', 'o', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', 'x', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', 'x', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+    [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+
+]
+
+# print(compute_brute_force(tb))
+# print(compute(tb))
+# max_depth = 5
+# start = time.time()
+# move = get_move(tb, 20)
+# print(move)
+# print(time.time() - start)
+# print(count)
+# print(count_leaf)
+# tb[move[0]][move[1]] = 'o'
+# print_caro_table(tb)
+# print(delay_time)
+# print(count_id)
+
+# # print(compute(tb))
+#
+# chars = ['x', 'o', ' ']
+# def generate_random_pat(size):
+#     row = [random.choice(chars) for _ in range(size)]
+#     return ''.join(row)
+#
+# print(compute(tb))
+# get_all_lines(tb)
+# print(generate_random_pat(20))
+# count = 0
+# for i in range(100000):
+#     s = generate_random_pat(7)
+#     if (rk(s) != brute_force(s)):
+#         print("error: " + s)
+#         count+=1
+#
+# print(count)
+#
+# s = "xooxoooooo   o  xxxo"
+# print(rk(s))
+# print(brute_force(s))
+
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', 'x', 'o', 'o', 'o', 'o', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', 'x', 'x', 'x', 'x', 'o', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x', ' ', 'o', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'x', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 'o', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+# [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+#

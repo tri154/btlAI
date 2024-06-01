@@ -3,7 +3,7 @@ import time
 import copy
 import random
 global max_depth, hashT, HEURISTIC_SCORE, R, Q, R5, R6, A, B, cacheT, count, count_leaf, count_id, delay_time, countX, countO, ZobristTable
-# max_depth = 7
+max_depth = 6
 delay_time = 0
 count_id = 0
 cacheT = dict()
@@ -403,6 +403,15 @@ def init_node(board):
     return init
 
 def move_as_o(board):
+    global cacheT, ZobristTable
+    print(len(cacheT))
+    if len(cacheT) > 3000000:
+        cacheT = dict()
+    print(count_id)
+    # input("size bang **: ")
+    if ZobristTable == None:
+        init_Zobrist_table(len(board))
+
     size = len(board)
     init = init_node(board)
     if len(init.children) == 0: return ((size / 2, size / 2))
@@ -418,6 +427,7 @@ def move_as_o(board):
         cur = node('o', c, init.cache, init.id, init)
         l.append(cur)
     heapq.heapify(l)
+    next_action = l[0].move
     while len(l) != 0:
         cur = heapq.heappop(l)
         cres.append((cur.move, cur.cache[0]))
@@ -429,6 +439,7 @@ def move_as_o(board):
         beta = min(beta, t)
         if value == float("-inf"): break
 
+
     print(value)
     print(lres)
     print(cres)
@@ -439,6 +450,16 @@ def move_as_o(board):
     return next_action
 
 def move_as_x(board):
+
+    global cacheT, ZobristTable
+    print(len(cacheT))
+    if len(cacheT) > 300000:
+        cacheT = dict()
+    print(count_id)
+    # input("size bang **: ")
+    if ZobristTable == None:
+        init_Zobrist_table(len(board))
+
     size = len(board)
     init = init_node(board)
     if len(init.children) == 0: return ((size / 2, size / 2))
@@ -454,6 +475,7 @@ def move_as_x(board):
         cur = node('x', c, init.cache, init.id, init, True)
         l.append(cur)
     heapq.heapify(l)
+    next_action = l[0].move
     while len(l) != 0:
         cur = heapq.heappop(l)
         cres.append((cur.move, -cur.cache[0]))
@@ -481,15 +503,7 @@ def move_as_x(board):
 
 def get_move(board, size):
 
-    global cacheT, ZobristTable
-    print(len(cacheT))
-    if len(cacheT) > 2000000:
-        cacheT = dict()
-    print(count_id)
-    # input("size bang **: ")
-    if ZobristTable == None:
-        init_Zobrist_table(size)
-    return move_as_x(board)
+    return move_as_o(board)
 
 #x max, o min
 def check_neighbor_blank(x, y, board, size):

@@ -1,10 +1,8 @@
 import heapq
-import time
 import copy
 import random
-global max_depth, hashT, HEURISTIC_SCORE, R, Q, R5, R6, A, B, cacheT, count, count_leaf, count_id, delay_time, countX, countO, ZobristTable
+global max_depth, hashT, HEURISTIC_SCORE, R, Q, R5, R6, A, B, cacheT, count, count_leaf, count_id, countX, countO, ZobristTable
 max_depth = 6
-delay_time = 0
 count_id = 0
 cacheT = dict()
 count = 0
@@ -430,9 +428,9 @@ def move_as_o(board):
     next_action = l[0].move
     while len(l) != 0:
         cur = heapq.heappop(l)
-        cres.append((cur.move, cur.cache[0]))
+        # cres.append((cur.move, cur.cache[0]))
         t = cur.max_value(alpha, beta)
-        lres.append((cur.move, t))
+        # lres.append((cur.move, t))
         if t < value:
             value = t
             next_action = cur.move
@@ -445,7 +443,6 @@ def move_as_o(board):
     print(cres)
     print("total node: " +  str(count))
     print("total leaf: " + str(count_leaf))
-    print("delay time: " + str(delay_time))
     print("cache hit: " + str(count_id))
     return next_action
 
@@ -497,7 +494,6 @@ def move_as_x(board):
     print(cres)
     print("total node: " +  str(count))
     print("total leaf: " + str(count_leaf))
-    print("delay time: " + str(delay_time))
     print("cache hit: " + str(count_id))
     return next_action
 
@@ -563,12 +559,13 @@ class node:
         self.depth = parent.depth + 1
         self.children = parent.children
         self.to_remove = list()
+
         print(str(count) + " depth: " + str(self.depth))
         x = move[0]
         y = move[1]
+
         piece = indexOf(self.role)
         self.id = lastID ^ ZobristTable[x][y][piece]
-        # if self.depth == max_depth:
         self.cache = copy.deepcopy(cacheT.get(self.id))
         if self.cache is None:
             self.cache = self.computeCache(lastCache)
@@ -639,14 +636,6 @@ class node:
             while len(li) != 0:
                 cur = heapq.heappop(li)
                 t = cur.max_value(alpha, beta)
-
-                # if self.role == 'x' and self.move == (7, 10) and self.depth == 1:
-                #     print_caro_table(cur.board)
-                #     print(cur.cache)
-                #     print(cur.move)
-                #     print(t)
-                #     input()
-
                 value = min(value, t)
                 beta = min(beta, t)
                 if alpha >= beta:

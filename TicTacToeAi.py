@@ -2,7 +2,7 @@ import heapq
 import copy
 import random
 global max_depth, hashT, HEURISTIC_SCORE, R, Q, R5, R6, A, B, cacheT, count, count_leaf, count_id, countX, countO, ZobristTable
-max_depth = 6
+max_depth = 5
 count_id = 0
 cacheT = dict()
 count = 0
@@ -178,27 +178,29 @@ HEURISTIC_SCORES = {
         " oooo ": -1000000,
         " xxxx ":  1000000,
 
-        "oxxxx ": 100000,
-        " xxxxo": 100000,
+        "oxxxx ": 500000,
+        " xxxxo": 500000,
+
+        "x xxx": 500000,
+        "xx xx": 500000,
+        "xxx x": 500000,
 
         " xxx ": 1000,
         " x xx ": 1000,
         " xx x ": 1000,
 
-        "x xxx": 50000,
-        "xx xx": 50000,
-        "xxx x": 50000,
 
-        " oooox": -100000,
-        "xoooo ": -100000,
+        " oooox": -500000,
+        "xoooo ": -500000,
+
+        "o ooo": -500000,
+        "oo oo": -500000,
+        "ooo o": -500000,
 
         " ooo ": -1000,
         " oo o ": -1000,
         " o oo ": -1000,
 
-        "o ooo": -50000,
-        "oo oo": -50000,
-        "ooo o": -50000,
 
 
         "  xxxo": 100,
@@ -227,53 +229,42 @@ HEURISTIC_SCORES = {
 hashT = {
     6628 : float("-inf"),
     22020 : float("inf"),
-
     19967 : -1000000,
     7869 : 1000000,
-
-    8361 : 100000,
-    7948 : 100000,
-
+    8361 : 500000,
+    7948 : 500000,
+    16256 : 500000,
+    25862 : 500000,
+    26973 : 500000,
     2841 : 1000,
     2105 : 1000,
     11711 : 1000,
-
-    16256 : 50000,
-    25862 : 50000,
-    26973 : 50000,
-
-    20055 : -100000,
-    15645 : -100000,
-
+    20055 : -500000,
+    15645 : -500000,
+    15194 : -500000,
+    23193 : -500000,
+    13885 : -500000,
     965 : -1000,
     9051 : -1000,
     1052 : -1000,
-
-    15194 : -50000,
-    23193 : -50000,
-    13885 : -50000,
-
     16338 : 100,
     13314 : 100,
-
     21212 : 50,
     6683 : 50,
-
     17156 : 10,
     7550 : 10,
     10574 : 10,
     20180 : 10,
-
     14471 : -100,
     22902 : -100,
-
     21640 : -50,
     17530 : -50,
-
     11986 : -10,
     3987 : -10,
     23037 : -10,
     3555 : -10,
+
+
 
 }
 countX2 = {
@@ -377,8 +368,8 @@ def toHash(str):
     return t
 
 
-# for key in HEURISTIC_SCORES:
-#     t = toHash(key)
+for key in HEURISTIC_SCORES:
+    t = toHash(key)
 #     # if len(key) == 5:
 #     #     print("\'" + key + "x" + "\'" + " : " + str(HEURISTIC_SCORES[key]) + ", ")
 #     #     print("\'" + key + "o" + "\'" + " : " + str(HEURISTIC_SCORES[key]) + ", ")
@@ -387,7 +378,7 @@ def toHash(str):
 #     #     print("\'" + "o" + key + "\'" + " : " + str(HEURISTIC_SCORES[key]) + ", ")
 #     #     print("\'" + " " + key + "\'" + " : " + str(HEURISTIC_SCORES[key]) + ", ")
     # print("\'" + key + "\'" + " : " + str(HEURISTIC_SCORES[key]) + ", ")
-    # print(str(t) + " : " + str(HEURISTIC_SCORES[key]) + ",")
+    print(str(t) + " : " + str(HEURISTIC_SCORES[key]) + ",")
 #
 
 
@@ -403,7 +394,7 @@ def init_node(board):
 def move_as_o(board):
     global cacheT, ZobristTable
     print(len(cacheT))
-    if len(cacheT) > 3000000:
+    if len(cacheT) > 4000000:
         cacheT = dict()
     print(count_id)
     # input("size bang **: ")
@@ -428,9 +419,9 @@ def move_as_o(board):
     next_action = l[0].move
     while len(l) != 0:
         cur = heapq.heappop(l)
-        # cres.append((cur.move, cur.cache[0]))
+        cres.append((cur.move, cur.cache[0]))
         t = cur.max_value(alpha, beta)
-        # lres.append((cur.move, t))
+        lres.append((cur.move, t))
         if t < value:
             value = t
             next_action = cur.move
@@ -450,7 +441,7 @@ def move_as_x(board):
 
     global cacheT, ZobristTable
     print(len(cacheT))
-    if len(cacheT) > 300000:
+    if len(cacheT) > 4000000:
         cacheT = dict()
     print(count_id)
     # input("size bang **: ")
@@ -499,7 +490,7 @@ def move_as_x(board):
 
 def get_move(board, size):
 
-    return move_as_o(board)
+    return move_as_x(board)
 
 #x max, o min
 def check_neighbor_blank(x, y, board, size):
@@ -566,12 +557,12 @@ class node:
 
         piece = indexOf(self.role)
         self.id = lastID ^ ZobristTable[x][y][piece]
-        self.cache = copy.deepcopy(cacheT.get(self.id))
-        if self.cache is None:
-            self.cache = self.computeCache(lastCache)
-            cacheT[self.id] = copy.deepcopy(self.cache)
-        else:
-            count_id += 1
+        # self.cache = copy.deepcopy(cacheT.get(self.id))
+        # if self.cache is None:
+        #     self.cache = self.computeCache(lastCache)
+        #     cacheT[self.id] = copy.deepcopy(self.cache)
+        # else:
+        #     count_id += 1
             # self.board[x][y] = self.role
             # test_value = compute(self.board)
             # self.board[x][y] = ' '
@@ -581,15 +572,15 @@ class node:
             #     print(self.cache)
             #     input()
 
-        # self.cache = self.computeCache(lastCache)
-        # self.board[x][y] = self.role
-        # test_value = compute(self.board)
-        # self.board[x][y] = ' '
-        # if test_value[0] != self.cache[0]:
-        #     print_caro_table(self.board)
-        #     print(test_value)
-        #     print(self.cache)
-        #     input()
+        self.cache = self.computeCache(lastCache)
+        self.board[x][y] = self.role
+        test_value = compute(self.board)
+        self.board[x][y] = ' '
+        if test_value[0] != self.cache[0]:
+            print_caro_table(self.board)
+            print(test_value)
+            print(self.cache)
+            input()
         self.reverse = reverse
         if reverse:
             self.cache[0] = -self.cache[0]
